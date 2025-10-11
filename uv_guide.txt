@@ -1,0 +1,23 @@
+# Instalar UV 
+pip install uv
+
+#Entrar no diretório e usar:
+uv init .
+
+# Criar ambiente
+uv venv
+
+# Rodar ambiente
+./venv/Scripts/activate
+
+# Adicionar dependencia
+uv add dependencia
+
+# Remover dependencia
+uv remove dependencia
+
+# Atualizar arquivo com as dependencias
+uv lock
+
+# Instalar dependencias
+uv sync
