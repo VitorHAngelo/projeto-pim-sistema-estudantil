@@ -1,11 +1,12 @@
-from login_interface import login
-from dados import checar_json_existe
+from dados import checar_json_existe, add_colaborador
+from seguranca import checar_existencia_env
+from login_interface import tela_login
 
 
 def main():
-    print("Hello from projeto-pim-sistema-estudantil!")
+    checar_existencia_env()
     checar_json_existe()
-    login()
+    tela_login()
 
 
 if __name__ == "__main__":

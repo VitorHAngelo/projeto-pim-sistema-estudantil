@@ -1,2 +1,2 @@
 @echo off
-start /b "" ".\.venv\Scripts\pythonw.exe" "interface.py"
+start /b "" ".\.venv\Scripts\pythonw.exe" "main.py"

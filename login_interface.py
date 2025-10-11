@@ -5,6 +5,7 @@ FONTE = "Calibri"
 
 
 def login():
+    global campo_nome, campo_senha
     campo_nome.delete(0, tk.END)
     campo_senha.delete(0, tk.END)
     # solicitar login
@@ -97,4 +98,6 @@ botao_login.grid(row=6, column=1, sticky="e")
 botao_cadastrar.grid(row=6, column=2)
 botao_sair.grid(row=6, column=3)
 
-janela_login.mainloop()
+
+def tela_login():
+    janela_login.mainloop()
