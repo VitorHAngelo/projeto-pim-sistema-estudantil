@@ -8,8 +8,8 @@ from paths import FILES_PATH
 def checar_existencia_env() -> None:
     if not os.path.exists(FILES_PATH + ".env"):
         string_key = Fernet.generate_key().decode()
-        with open(FILES_PATH + ".env", mode="w") as env:
-            env.write(f"ADMINISTRADOR=UNIP25ADS\nSECRET_KEY={string_key}\n")
+        with open(FILES_PATH + ".env", "x") as file:
+            file.write(f"ADMINISTRADOR=UNIP25ADS\nSECRET_KEY={string_key}\n")
 
 
 def get_env_key(key) -> str:
