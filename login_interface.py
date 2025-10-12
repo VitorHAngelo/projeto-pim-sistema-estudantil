@@ -5,7 +5,6 @@ FONTE = "Calibri"
 
 
 def login():
-    global campo_nome, campo_senha
     campo_nome.delete(0, tk.END)
     campo_senha.delete(0, tk.END)
     # solicitar login
@@ -21,6 +20,14 @@ def sem_acesso():
 def encerrar():
     if messagebox.askyesno(title="Sair?", message="Tem certeza que deseja sair?"):
         janela_login.destroy()
+
+
+def atalho_enter(event):
+    if event.state in (40, 262184) and event.keysym == "Return":
+        login()
+        # campo_senha.get()
+        # campo_nome.get()
+        pass
 
 
 janela_login = tk.Tk()
@@ -46,6 +53,7 @@ etiqueta_nome = tk.Label(
 )
 nome = tk.StringVar()
 campo_nome = tk.Entry(janela_login, textvariable=nome, font=(FONTE, 12))
+campo_nome.bind("<KeyPress>", atalho_enter)
 
 senha = tk.StringVar()
 campo_senha = tk.Entry(
@@ -54,8 +62,16 @@ campo_senha = tk.Entry(
     font=(FONTE, 12, ""),
     show="*",
 )
+campo_senha.bind("<KeyPress>", atalho_enter)
+
 etiqueta_senha = tk.Label(janela_login, text="Senha: ", font=(FONTE, 12, "bold"))
 
+botao_login = tk.Button(
+    janela_login,
+    text="Entrar",
+    font=(FONTE, 10, "bold"),
+    command=login,
+)
 botao_esqueci_senha = tk.Button(
     janela_login,
     text="Esqueci minha senha",
@@ -65,12 +81,6 @@ botao_esqueci_senha = tk.Button(
     ),
     border=0,
     foreground="blue",
-)
-botao_login = tk.Button(
-    janela_login,
-    text="Entrar",
-    font=(FONTE, 10, "bold"),
-    command=login,
 )
 botao_cadastrar = tk.Button(
     janela_login,

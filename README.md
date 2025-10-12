@@ -11,3 +11,9 @@ ___
 - Importante que Python esteja instalado no computador
 - Execute o arquivo Instalar.bat para preparar o ambiente e instalar as bibliotecas necessárias para o software
 - Execute o código a partir do arquivo Executar
+
+
+## ToDo
+
+- Impor limite de tentativas de login
+- Implementar redefinição de senha por email
