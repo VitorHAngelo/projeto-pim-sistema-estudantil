@@ -2,14 +2,22 @@
 echo Instalando uv
 pip install uv
 
-echo Ajustando permissões para execução de scripts PowerShell...
+cls
+echo Ajustando permissoes para execucao de scripts PowerShell...
 powershell -Command "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force"
 
+cls
+IF NOT EXIST ".venv" (
+    echo Criando ambiente virtual...
+    uv venv
+) ELSE (
+    echo Ambiente virtual já existe.
+)
+
+cls
 echo Sincronizando dependencias...
-.\.venv\Scripts\uv.exe sync
+uv sync
 
-echo.
-echo Executando o sistema...
-.\.venv\Scripts\pythonw.exe interface.py
-
+cls
+echo Ambiente instalado e preparado
 pause
