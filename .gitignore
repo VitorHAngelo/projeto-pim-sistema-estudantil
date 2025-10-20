@@ -208,4 +208,6 @@ __marimo__/
 
 # Personal
 teste/
-files/
+files/*
+!files/SmartEdu.ico
+!files/SmartEdu.png

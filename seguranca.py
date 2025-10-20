@@ -9,7 +9,10 @@ def checar_existencia_env() -> None:
     if not os.path.exists(FILES_PATH + ".env"):
         string_key = Fernet.generate_key().decode()
         with open(FILES_PATH + ".env", "x") as file:
-            file.write(f"ADMINISTRADOR=UNIP25ADS\nSECRET_KEY={string_key}\n")
+            file.write(
+                f"ADMINISTRADOR=UNIP25ADS\nSECRET_KEY={string_key}\nEMAIL_PASSWORD=\
+EMAIL_PASSWORD='oucs ptcj esun ruoc'\n"
+            )
 
 
 def get_env_key(key: str) -> str:

@@ -1,2 +1,2 @@
 @echo off
-start /b "" ".\.venv\Scripts\pythonw.exe" "cadastro_interface.py"
+start /b "" ".\.venv\Scripts\pythonw.exe" "main.py"
