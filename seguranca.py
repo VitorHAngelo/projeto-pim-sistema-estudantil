@@ -1,6 +1,6 @@
 import json
 import os
-from dotenv import get_key
+from dotenv import get_key, set_key
 from cryptography.fernet import Fernet
 from paths import FILES_PATH
 
@@ -12,8 +12,12 @@ def checar_existencia_env() -> None:
             file.write(f"ADMINISTRADOR=UNIP25ADS\nSECRET_KEY={string_key}\n")
 
 
-def get_env_key(key) -> str:
+def get_env_key(key: str) -> str:
     return get_key(FILES_PATH + ".env", key)
+
+
+def set_env_key(key: str, value: str) -> str:
+    return set_key(FILES_PATH + ".env", key, value)
 
 
 def get_fernet():

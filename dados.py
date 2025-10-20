@@ -43,10 +43,10 @@ def get_colaborador(identificador):
     """
     dados = descriptografar_json()
     if not identificador in dados:
-        print("Dados inválidos")
+        print("Usuário não localizado no sistema.")
         return None
     else:
-        return {identificador: dados[identificador]}
+        return {"cpf": identificador, **dados[identificador]}
 
 
 def get_aluno():
@@ -63,15 +63,34 @@ def add_colaborador(usuario: dict) -> str:
         str: Informativo do status da operação
     """
     if not usuario:
-        return "Usuário inválido"
+        return (0, "Usuário inválido.")
     for identificador, informacoes in usuario.items():
         break
-    if get_colaborador(identificador):
-        return "Usuário já existe"
+    colaborador = get_colaborador(identificador)
+    if colaborador != None:
+        return (1, f"Usuário {colaborador[identificador]['nome']} já está cadastrado.")
     else:
         dados = descriptografar_json()
         dados[identificador] = informacoes
         criptografar_json(dados=dados)
+        return (2, "Usuário cadastrado.")
+
+
+def editar_colaborador(usuario: dict) -> str:
+    """Recebe um dicionário com os dados do usuário e atualiza o arquivo JSON.
+
+    Args:
+        usuario (dict): Informações do usuário
+
+    Returns:
+        str: Informativo do status da operação
+    """
+    dados = descriptografar_json()
+    for identificador, informacoes in usuario.items():
+        break
+    dados[identificador] = informacoes
+    criptografar_json(dados=dados)
+    return f"Perfil atualizado."
 
 
 def cadastrar():
