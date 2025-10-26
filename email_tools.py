@@ -7,18 +7,23 @@ SMTP_PORT = 587
 USERNAME = "smarteduhelper@gmail.com"
 PASSWORD = get_env_key("EMAIL_PASSWORD")
 
-usuario = {"nome": "Vitor Angelo", "email": "vitorcincerre@gmail.com"}
+usuario = {"nome": "Vitor Angelo", "email": "vitorcincerre@hotmail.com"}
 senha = "123456"
 
 
-def novo_email(usuario: dict, senha: str):
-    corpo = f"""    Olá {usuario['nome']},\n\nEstamos enviando este email para informar sua
-nova senha provisória no sistema SmartEdu.
-    Favor realizar o seu login na plataforma e alterar sua senha.
+def novo_email(usuario: dict, senha: str) -> None:
+    """_summary_
+
+    Args:
+        usuario (dict): {'nome': 'Name', 'email': 'email@domain.com'}
+        senha (str): senha123
+    """
+    corpo = f"""    Olá {usuario['nome']},\n\nAtendendo a solicitação de redefinição de sua senha, estamos enviando este email para informar sua nova senha provisória no sistema SmartEdu.
+Favor realizar o seu login na plataforma e alterar sua senha.
     
-    {senha}
+{senha}
     
-    Qualquer dúvida, favor contatar o responsável pela sua organização."""
+Qualquer dúvida, favor contatar o responsável pela sua organização."""
     mensagem = MIMEText(corpo, "plain")
     mensagem["Subject"] = "SmartEdu - Nova senha de acesso"
     mensagem["From"] = USERNAME
@@ -27,4 +32,8 @@ nova senha provisória no sistema SmartEdu.
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
         server.starttls()
         server.login(USERNAME, PASSWORD)
-        server.sendmail(USERNAME, usuario["email"], mensagem.as_string())
+        print(server.sendmail(USERNAME, usuario["email"], mensagem.as_string()))
+
+
+if __name__ == "__main__":
+    novo_email(usuario, senha)

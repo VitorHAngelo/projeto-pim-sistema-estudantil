@@ -1,8 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from seguranca import get_env_key, set_env_key
+from seguranca import verificar_senha, hashear_senha
 from telas.utils_tk import limpar_widgets
+from dados import editar_colaborador
 
 FONTE = "Calibri"
 TECLAS_IGNORADAS = ("BackSpace", "Delete", "Left", "Up", "Down", "Right", "Return")
@@ -12,16 +13,18 @@ def limpar():
     frame_alterar_senha.destroy()
 
 
-def atalho_enter(event):
+def atalho_enter(event, colaborador):
     if event.state in (40, 42, 262184, 262186) and event.keysym == "Return":
-        salvar()
+        salvar(colaborador)
 
 
-def salvar():
-    if senhas["atual"].get() == get_env_key("ADMINISTRADOR"):
+def salvar(colaborador):
+    status = verificar_senha(colaborador["senha"], senhas["atual"].get())
+    if status == 0:
         if senhas["nova"].get() == senhas["repita"].get():
             if len(senhas["nova"].get()) >= 8:
-                set_env_key("ADMINISTRADOR", senhas["nova"].get())
+                colaborador["senha"] = hashear_senha(senhas["nova"].get())
+                editar_colaborador(colaborador)
                 messagebox.showinfo(
                     title="Sucesso", message="Senha alterada com sucesso."
                 )
@@ -50,7 +53,7 @@ def salvar():
         limpar()
 
 
-def reconstruir_frame(janela):
+def reconstruir_frame(janela, colaborador):
     limpar_widgets(janela)
 
     global frame_alterar_senha
@@ -72,7 +75,7 @@ def reconstruir_frame(janela):
 
     label_titulo = tk.Label(
         frame_alterar_senha,
-        text="Alteração de Senha de Administrador: ",
+        text="Alteração de Senha",
         font=(FONTE, 22, "bold"),
     )
 
@@ -87,7 +90,7 @@ def reconstruir_frame(janela):
         font=(FONTE, 16),
         show="*",
     )
-    entry_senha_atual.bind("<KeyPress>", atalho_enter)
+    entry_senha_atual.bind("<KeyPress>", lambda event: atalho_enter(event, colaborador))
     senhas["atual"] = campo_senha_atual
 
     ttk.Separator(janela, orient="horizontal")
@@ -103,7 +106,7 @@ def reconstruir_frame(janela):
         font=(FONTE, 16),
         show="*",
     )
-    entry_nova_senha.bind("<KeyPress>", atalho_enter)
+    entry_nova_senha.bind("<KeyPress>", lambda event: atalho_enter(event, colaborador))
     senhas["nova"] = campo_nova_senha
 
     # Repita senha
@@ -117,7 +120,9 @@ def reconstruir_frame(janela):
         font=(FONTE, 16),
         show="*",
     )
-    entry_repita_senha.bind("<KeyPress>", atalho_enter)
+    entry_repita_senha.bind(
+        "<KeyPress>", lambda event: atalho_enter(event, colaborador)
+    )
     senhas["repita"] = campo_repita_senha
 
     # Botões
@@ -125,7 +130,7 @@ def reconstruir_frame(janela):
         frame_alterar_senha,
         text="Salvar",
         font=(FONTE, 14, "bold"),
-        command=salvar,
+        command=lambda: salvar(colaborador),
     )
     botao_cancelar = tk.Button(
         frame_alterar_senha, text="Cancelar", font=(FONTE, 14), command=limpar
@@ -148,9 +153,9 @@ def reconstruir_frame(janela):
     botao_salvar.grid(row=8, column=7, sticky="wes", ipady=10, padx=2)
 
 
-def alterar_senha_admin(janela):
-    return reconstruir_frame(janela)
+def alterar_senha_colaborador(janela: tk.Tk, colaborador: dict):
+    return reconstruir_frame(janela, colaborador)
 
 
 if __name__ == "__main__":
-    alterar_senha_admin()
+    alterar_senha_colaborador()

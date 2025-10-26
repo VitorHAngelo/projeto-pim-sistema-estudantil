@@ -4,6 +4,7 @@ from tkinter import messagebox
 from datetime import datetime
 from dados import get_colaborador, editar_colaborador
 from telas.utils_tk import limpar_widgets
+from seguranca import gerar_senha_temp, hashear_senha
 
 
 FONTE = "Calibri"
@@ -91,6 +92,19 @@ def formatar_data(event, campo, entry):
         data.insert(5, "/")
     entry.delete(0, tk.END)
     entry.insert(0, "".join(data[:10]))
+
+
+def resetar_senha(cpf):
+    senha = gerar_senha_temp()
+    mensagem_senha = f"Salve a senha do usuário: {senha}\nA senha foi copiada para a área de transferência."
+    messagebox.showinfo(
+        "Senha temporária", message=mensagem_senha, icon="info", parent=frame_edicao
+    )
+    # Pega direto do JSON os dados para não puxar das entrys da interface
+    dados_usuario = get_colaborador(cpf)
+    dados_usuario["senha"] = hashear_senha(senha)
+    print(dados_usuario)
+    editar_colaborador(dados_usuario)
 
 
 def reconstruir_frame(frame_conteudo, usuario_buscado):
@@ -182,6 +196,12 @@ def reconstruir_frame(frame_conteudo, usuario_buscado):
     campo_cargo.set(usuario_buscado["cargo"])
 
     # Botões
+    botao_resetar_senha = tk.Button(
+        frame_edicao,
+        text="Gerar nova senha",
+        font=(FONTE, 14),
+        command=lambda: resetar_senha(usuario_buscado["cpf"]),
+    )
     botao_salvar = tk.Button(
         frame_edicao, text="Salvar", font=(FONTE, 14, "bold"), command=atualizar_dados
     )
@@ -216,6 +236,7 @@ def reconstruir_frame(frame_conteudo, usuario_buscado):
 
     # Row 8
     botao_cancelar.grid(row=8, column=4, sticky="es", ipady=10, padx=2)
+    botao_resetar_senha.grid(row=8, column=5, sticky="wes", ipady=10, padx=2)
     botao_salvar.grid(row=8, column=6, sticky="wes", ipady=10, padx=2)
 
 
@@ -261,13 +282,13 @@ def buscar_colaborador(frame_conteudo, cpf, event=None):
         reconstruir_frame(frame_conteudo, usuario_buscado)
     else:
         messagebox.showinfo("Inválido.", message="CPF não localizado.")
-        iniciar_edicao(frame_conteudo)
+        iniciar_edicao_colaborador(frame_conteudo)
 
 
-def iniciar_edicao(frame_conteudo):
+def iniciar_edicao_colaborador(frame_conteudo):
     limpar_widgets(frame_conteudo)
     usuario_buscado = interface_busca(frame_conteudo)
 
 
 if __name__ == "__main__":
-    iniciar_edicao()
+    iniciar_edicao_colaborador()

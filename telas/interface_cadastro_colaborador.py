@@ -4,6 +4,7 @@ from tkinter import messagebox
 from datetime import datetime
 from dados import get_colaborador, add_colaborador
 from telas.utils_tk import limpar_widgets
+from seguranca import hashear_senha, gerar_senha_temp
 
 FONTE = "Calibri"
 TECLAS_IGNORADAS = ("BackSpace", "Delete", "Left", "Up", "Down", "Right", "Return")
@@ -41,17 +42,29 @@ def cadastrar():
                 frame_erros, text=erros[i], fg="red", font=(FONTE, 14, "bold")
             ).grid(row=i, column=0, sticky="w")
         return
+    # Solicita nova senha temporária
+    senha = gerar_senha_temp()
+    # Cria dicionário com os dados recebidos da interface
+    senha_crua = senha
     usuario[cpf] = {
         "nome": dados_usuario["nome"].get(),
         "nascimento": nascimento,
         "email": dados_usuario["email"].get(),
         "telefone": telefone,
         "cargo": dados_usuario["cargo"].get(),
+        "senha": hashear_senha(senha),
     }
-
     status = add_colaborador(usuario)
     if status[0] in (1, 2):  # Se código for 1 ou 2
         limpar_widgets(frame_cadastro)
+    status[1] = (
+        status[1]
+        + "\nSalve a senha do usuário: "
+        + senha_crua
+        + "\nA senha foi copiada para a área de transferência."
+        if status[0] == 2
+        else status[1]
+    )
     messagebox.showinfo(
         "Cadastro", message=status[1], icon="info", parent=frame_cadastro
     )

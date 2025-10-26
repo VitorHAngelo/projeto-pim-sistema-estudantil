@@ -1,12 +1,6 @@
 import tkinter as tk
-from tkinter import ttk
-from config import FILES_PATH
-
-
-def fechar(janela: tk.Tk):
-    if hasattr(janela, "concluido"):
-        janela.concluido.set(True)
-    janela.destroy()
+from tkinter import ttk, messagebox
+from config import FILES_PATH, GUI_FONT
 
 
 def ui_login(janela: tk.Tk):
@@ -36,6 +30,20 @@ def ui_geral(frame_conteudo: tk.Tk):
         padx=0,
         pady=0,
     )
+    escrita = """
+   █████████                                       █████    ██████████     █████           
+  ███░░░░░███                                     ░░███    ░░███░░░░░█    ░░███            
+ ░███    ░░░  █████████████    ██████   ████████  ███████   ░███  █ ░   ███████  █████ ████
+ ░░█████████ ░░███░░███░░███  ░░░░░███ ░░███░░███░░░███░    ░██████    ███░░███ ░░███ ░███ 
+  ░░░░░░░░███ ░███ ░███ ░███   ███████  ░███ ░░░   ░███     ░███░░█   ░███ ░███  ░███ ░███ 
+  ███    ░███ ░███ ░███ ░███  ███░░███  ░███       ░███ ███ ░███ ░   █░███ ░███  ░███ ░███ 
+ ░░█████████  █████░███ █████░░████████ █████      ░░█████  ██████████░░████████ ░░████████
+  ░░░░░░░░░  ░░░░░ ░░░ ░░░░░  ░░░░░░░░ ░░░░░        ░░░░░  ░░░░░░░░░░  ░░░░░░░░   ░░░░░░░░ 
+"""
+    label_escrita = tk.Label(
+        logo_frame, text=escrita, font=("Consolas", 10), justify="left"
+    )
+    label_escrita.grid(row=0, column=1, sticky="sw")
     ttk.Separator(frame_conteudo, orient=tk.HORIZONTAL).grid(
         row=1, column=0, columnspan=10, sticky="nwe"
     )
@@ -45,3 +53,10 @@ def limpar_widgets(janela: tk.Tk):
     for widget in janela.winfo_children():
         if not isinstance(widget, tk.Menu):
             widget.destroy()
+
+
+def encerrar(janela):
+    if messagebox.askyesno(title="Sair?", message="Tem certeza que deseja sair?"):
+        janela.concluido.set(True)
+        janela.quit()
+        janela.after(50, janela.destroy)
