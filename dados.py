@@ -2,6 +2,7 @@ import json
 import os
 from paths import FILES_PATH
 from seguranca import get_fernet
+import re
 
 FILE_NAMES = {
     "colaboradores": "colaboradores.json",
@@ -23,14 +24,14 @@ def checar_json_existe():
             print(f"Arquivo {key} JSON já presente.")
 
 
-def descriptografar_json(arquivo="colaboradores"):
+def descriptografar_json(arquivo):
     with open(FILES_PATH + FILE_NAMES[arquivo], mode="rb") as file:
         dados_protegidos = file.read()
 
         return json.loads(get_fernet().decrypt(dados_protegidos).decode())
 
 
-def criptografar_json(dados, arquivo="colaboradores"):
+def criptografar_json(dados, arquivo: str):
     with open(FILES_PATH + str(FILE_NAMES[arquivo]), mode="wb") as file:  # Cria arquivo
         dados_bytes = json.dumps(dados).encode()
         dados_protegidos = get_fernet().encrypt(dados_bytes)
@@ -54,21 +55,61 @@ def get_colaborador(identificador):
         return {"cpf": identificador, **dados[identificador]}
 
 
-def get_aluno(identificador):
-    """Espera receber o identificador do usuário e retorna suas informações
+def get_aluno_by_cpf(cpf: str):
+    """Espera receber o cpf do aluno e retorna suas informações
 
     Args:
-        identificador (str): Identificador geral do usuário
+        cpf (str): cpf do aluno
 
     Returns:
-        dict: Informações do usuário
+        dict: Informações do aluno
     """
-    dados = descriptografar_json("alunos")
-    if not identificador in dados:
-        print("Usuário não localizado no sistema.")
+    dados: dict = descriptografar_json("alunos")
+    for ra, aluno in dados.items():
+        if aluno["cpf"] == cpf:
+            return {"ra": ra, **aluno}
+    print("Usuário não localizado no sistema.")
+    return None
+
+
+def get_aluno_by_ra(ra: str):
+    """Espera receber o RA do aluno e retorna suas informações
+
+    Args:
+        ra (str): RA do aluno
+
+    Returns:
+        dict: Informações do aluno
+    """
+    dados: dict = descriptografar_json("alunos")
+    usuario: dict = dados.get(ra, None)
+    if usuario == None:
         return None
-    else:
-        return {"cpf": identificador, **dados[identificador]}
+    return {"ra": ra, **usuario}
+
+
+def get_alunos_by_name(busca: str):
+    """Espera receber o RA do aluno e retorna suas informações
+
+    Args:
+        ra (str): RA do aluno
+
+    Returns:
+        dict: Lista de ocorrências correspondentes a busca no formato {nome: ra,}
+    """
+    busca = busca.strip().split()
+    padrao = ".*".join(map(re.escape, busca))
+    regex = re.compile(padrao, re.IGNORECASE)
+    # Obter lista de nomes de alunos
+    dicionario_alunos = {}
+    dados: dict = descriptografar_json("alunos")
+    for ra, informacoes in dados.items():
+        dicionario_alunos[informacoes["nome"]] = ra
+    # Procurar nomes compatíveis
+    nomes_compativeis = {
+        nome: ra for nome, ra in dicionario_alunos.items() if regex.search(nome)
+    }
+    return nomes_compativeis
 
 
 def add_colaborador(usuario: dict) -> str:
@@ -93,7 +134,7 @@ def add_colaborador(usuario: dict) -> str:
     else:
         dados = descriptografar_json(arquivo="colaboradores")
         dados[identificador] = informacoes
-        criptografar_json(dados=dados)
+        criptografar_json(dados=dados, arquivo="colaboradores")
         return [2, "Usuário cadastrado."]
 
 
@@ -110,6 +151,31 @@ def editar_colaborador(colaborador: dict) -> str:
     dados[colaborador.pop("cpf")] = colaborador
     criptografar_json(dados=dados, arquivo="colaboradores")
     return f"Perfil atualizado."
+
+
+def add_aluno(aluno: dict) -> str:
+    """Recebe um dicionário e verifica a por ocorrência no banco atual, formata devidamente e salva no JSON.
+
+    Args:
+        aluno (dict): Informações do aluno
+
+    Returns:
+        str: Informativo do status da operação
+    """
+    if not aluno:
+        return [0, "Usuário inválido."]
+    consulta = get_aluno_by_cpf(aluno["cpf"])
+    if consulta != None:
+        return [
+            1,
+            f"Aluno {aluno['nome']} já está cadastrado.",
+        ]
+    else:
+        dados = descriptografar_json(arquivo="alunos")
+        ra = get_next_ra()
+        dados[ra] = aluno
+        criptografar_json(dados=dados, arquivo="alunos")
+        return [2, "Usuário cadastrado."]
 
 
 def cadastrar():
@@ -152,7 +218,6 @@ def get_turma(identificador):
         dict: Informações do turma
     """
     dados = descriptografar_json("turmas")
-    print(dados)
     if not identificador in dados:
         print("Turma não localizado no sistema.")
         return None
@@ -175,3 +240,14 @@ def editar_turma(turma: dict) -> str:
     dados[identificador] = informacoes
     criptografar_json(dados=dados, arquivo="turmas")
     return f"Turma atualizada."
+
+
+def get_next_ra():
+    dados: dict = descriptografar_json(arquivo="alunos")
+    lista_ra = sorted([int(ra[2:]) for ra in dados.keys()])
+    if not lista_ra:
+        return "RA000"
+    for i in range(len(lista_ra)):
+        if i != lista_ra[i]:
+            return "RA" + ((3 - len(str(i))) * "0") + str(i)
+    return "RA" + ((3 - len(str(i))) * "0") + str(i + 1)

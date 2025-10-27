@@ -103,7 +103,6 @@ def resetar_senha(cpf):
     # Pega direto do JSON os dados para não puxar das entrys da interface
     dados_usuario = get_colaborador(cpf)
     dados_usuario["senha"] = hashear_senha(senha)
-    print(dados_usuario)
     editar_colaborador(dados_usuario)
 
 

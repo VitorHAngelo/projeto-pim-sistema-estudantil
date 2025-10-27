@@ -57,7 +57,6 @@ def atalho_enter(event, janela):
 
 def esqueci_senha():
     cpf = campo_login.get()
-    print(cpf)
     colaborador = get_colaborador(cpf)
     if isinstance(colaborador, dict):
         senha = gerar_senha_temp()
@@ -153,7 +152,7 @@ def reconstruir_login(janela):
     frame_login.rowconfigure(8, weight=1)
 
     bemvindo.grid(row=2, column=1, columnspan=3)
-    etiqueta_login.grid(row=3, column=1, sticky="w")
+    etiqueta_login.grid(row=3, column=1, sticky="we")
     campo_login.grid(row=3, column=2, columnspan=1, sticky="w", padx=0)
     etiqueta_senha.grid(row=4, column=1, sticky="we")
     campo_senha.grid(row=4, column=2, columnspan=2, sticky="w")
