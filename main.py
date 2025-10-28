@@ -13,11 +13,13 @@ from telas.interface_cadastro_turma import iniciar_cadastro_turma
 from telas.utils_tk import encerrar
 from telas.interface_cadastro_aluno import iniciar_cadastro_aluno
 from telas.interface_edicao_aluno import iniciar_edicao_aluno
+from telas.utils_tk import alt_tamanho_janela
 
 
 def criar_barra_admin(janela):
     barra_admin = tk.Menu(janela)
     janela.config(menu=barra_admin)
+    alt_tamanho_janela(janela, 1300, 800)
 
     opcoes_menu_admin = tk.Menu(barra_admin, tearoff=0)
     opcoes_menu_admin.add_command(
@@ -42,6 +44,7 @@ def criar_barra_admin(janela):
 def criar_barra_coordenador(janela):
     barra_coordenador = tk.Menu(janela)
     janela.config(menu=barra_coordenador)
+    alt_tamanho_janela(janela, 1300, 800)
 
     # opcoes_menu_coordenador.add_separator()
     # Ações
@@ -81,6 +84,7 @@ def criar_barra_coordenador(janela):
 def criar_barra_professor(janela):
     barra_professor = tk.Menu(janela)
     janela.config(menu=barra_professor)
+    alt_tamanho_janela(janela, 1300, 800)
 
     opcoes_menu_coordenador = tk.Menu(barra_professor, tearoff=0)
     opcoes_menu_coordenador.add_command(
@@ -121,7 +125,6 @@ def login():
     frame_conteudo = tk.Frame(janela)
     frame_conteudo.grid(row=2, column=0, sticky="nsew", padx=0)
     frame_conteudo.grid_propagate(True)
-    janela.geometry("1300x800")
     if colaborador:
         janela.login_logo_frame.destroy()
         ui_geral(janela)
@@ -141,10 +144,9 @@ def main():
     janela = tk.Tk()
 
     janela.protocol("WM_DELETE_WINDOW", lambda: encerrar(janela))
-    janela.geometry("500x500")
     janela.title("Sistema Estudantil")
     janela.iconbitmap(FILES_PATH + "SmartEdu.ico")
-
+    alt_tamanho_janela(janela, 500, 500)
     janela.rowconfigure(0, weight=0, minsize=10)
     janela.rowconfigure(1, weight=0)
     janela.rowconfigure(2, weight=1)

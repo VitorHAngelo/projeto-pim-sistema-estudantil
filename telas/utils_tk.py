@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from config import FILES_PATH, GUI_FONT
+from config import FILES_PATH
+from datetime import datetime
+
+TECLAS_IGNORADAS = ("BackSpace", "Delete", "Left", "Up", "Down", "Right", "Return")
 
 
 def ui_login(janela: tk.Tk):
-    janela.geometry("500x500")
+    alt_tamanho_janela(janela, 500, 500)
     janela.title("Sistema Estudantil")
     janela.iconbitmap(FILES_PATH + "SmartEdu.ico")
     janela.login_logo_frame = tk.Frame(janela, height=300, width=300)
@@ -60,3 +63,73 @@ def encerrar(janela):
         janela.concluido.set(True)
         janela.quit()
         janela.after(50, janela.destroy)
+
+
+def alt_tamanho_janela(janela: tk.Tk, width: int, height: int):
+    janela.update_idletasks()
+
+    x = (janela.winfo_screenwidth() // 2) - (width // 2)
+    y = (janela.winfo_screenheight() // 2) - (height // 2)
+
+    janela.geometry(f"{width}x{height}")
+    janela.update_idletasks()
+
+    janela.geometry(f"{width}x{height}+{int(x)}+{int(y)}")
+
+
+def formatar_telefone(event, campo, entry):
+    if event.state in (40, 262184) and event.keysym in TECLAS_IGNORADAS:
+        return
+    telefone = [char for char in campo.get() if char.isdigit()]
+    if len(telefone) == 10:
+        telefone.insert(0, "(")
+        telefone.insert(3, ")")
+        telefone.insert(8, "-")
+        entry.delete(0, tk.END)
+        entry.insert(0, "".join(telefone))
+    else:
+        telefone.insert(0, "(")
+        telefone.insert(3, ")")
+        telefone.insert(9, "-")
+        entry.delete(0, tk.END)
+        entry.insert(0, "".join(telefone[0:14]))
+
+
+def formatar_cpf(event, campo, entry):
+    if event.state in (40, 262184) and event.keysym in TECLAS_IGNORADAS:
+        return
+    cpf = [char for char in campo.get() if char.isdigit()]
+    if len(cpf) >= 3:
+        cpf.insert(3, ".")
+    if len(cpf) >= 6:
+        cpf.insert(7, ".")
+    if len(cpf) >= 9:
+        cpf.insert(11, "-")
+    entry.delete(0, tk.END)
+    entry.insert(0, "".join(cpf[:14]))
+
+
+def verificar_email(event, campo, entry):
+    email = list(campo.get())
+    if not "@" in email or not "." in email or " " in email:
+        entry.config(fg="red")
+    else:
+        entry.config(fg="black")
+
+
+def verificar_data(event, campo, entry):
+    if event.state in (40, 262184) and event.keysym in TECLAS_IGNORADAS:
+        return
+    data = [letter for letter in campo.get() if letter.isdigit()]
+    if event.state == 40 and event.keysym == "Tab" and len(data) == 6:
+        if int("".join(data[-2:])) <= int(str(datetime.now().year)[2:]):
+            entry.insert(6, 20)
+        else:
+            entry.insert(6, 19)
+        return
+    if len(data) > 1:
+        data.insert(2, "/")
+    if len(data) > 4:
+        data.insert(5, "/")
+    entry.delete(0, tk.END)
+    entry.insert(0, "".join(data[:10]))

@@ -5,6 +5,12 @@ from datetime import datetime
 from dados import add_aluno
 from telas.utils_tk import limpar_widgets
 from dados import get_next_ra
+from telas.utils_tk import (
+    formatar_cpf,
+    formatar_telefone,
+    verificar_email,
+    verificar_data,
+)
 
 FONTE = "Calibri"
 TECLAS_IGNORADAS = (
@@ -86,64 +92,6 @@ def atalho_enter(event):
         cadastrar()
 
 
-def formatar_telefone(event, campo, entry):
-    if event.state in (40, 262184) and event.keysym in TECLAS_IGNORADAS:
-        return
-    telefone = [char for char in campo.get() if char.isdigit()]
-    if len(telefone) == 10:
-        telefone.insert(0, "(")
-        telefone.insert(3, ")")
-        telefone.insert(8, "-")
-        entry.delete(0, tk.END)
-        entry.insert(0, "".join(telefone))
-    else:
-        telefone.insert(0, "(")
-        telefone.insert(3, ")")
-        telefone.insert(9, "-")
-        entry.delete(0, tk.END)
-        entry.insert(0, "".join(telefone[0:14]))
-
-
-def formatar_cpf(event, campo, entry):
-    if event.state in (40, 262184) and event.keysym in TECLAS_IGNORADAS:
-        return
-    cpf = [char for char in campo.get() if char.isdigit()]
-    if len(cpf) >= 3:
-        cpf.insert(3, ".")
-    if len(cpf) >= 6:
-        cpf.insert(7, ".")
-    if len(cpf) >= 9:
-        cpf.insert(11, "-")
-    entry.delete(0, tk.END)
-    entry.insert(0, "".join(cpf[:14]))
-
-
-def verificar_email(event, campo, entry):
-    email = list(campo.get())
-    if not "@" in email or not "." in email or " " in email:
-        entry.config(fg="red")
-    else:
-        entry.config(fg="black")
-
-
-def verificar_data(event, campo, entry):
-    if event.state in (40, 262184) and event.keysym in TECLAS_IGNORADAS:
-        return
-    data = [letter for letter in campo.get() if letter.isdigit()]
-    if event.state == 40 and event.keysym == "Tab" and len(data) == 6:
-        if int("".join(data[-2:])) <= int(str(datetime.now().year)[2:]):
-            entry.insert(6, 20)
-        else:
-            entry.insert(6, 19)
-        return
-    if len(data) > 1:
-        data.insert(2, "/")
-    if len(data) > 4:
-        data.insert(5, "/")
-    entry.delete(0, tk.END)
-    entry.insert(0, "".join(data[:10]))
-
-
 def reconstruir_frame(frame_conteudo):
     limpar_widgets(frame_conteudo)
 
@@ -154,7 +102,6 @@ def reconstruir_frame(frame_conteudo):
 
     for i in range(1, 10):
         frame_cadastro_aluno.rowconfigure(i, minsize=20)
-    # frame_cadastro.rowconfigure(8, minsize=250, weight=1)
     frame_cadastro_aluno.columnconfigure((0, 6), minsize=10)
     frame_cadastro_aluno.columnconfigure((1, 2, 3, 4, 5), pad=5, weight=0, minsize=10)
     frame_cadastro_aluno.grid(row=0, column=0, sticky="sew", pady=15)

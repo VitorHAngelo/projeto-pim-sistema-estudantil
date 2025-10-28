@@ -85,6 +85,7 @@ def get_aluno_by_ra(ra: str):
     usuario: dict = dados.get(ra, None)
     if usuario == None:
         return None
+    print(usuario)
     return {"ra": ra, **usuario}
 
 
@@ -178,8 +179,19 @@ def add_aluno(aluno: dict) -> str:
         return [2, "Usuário cadastrado."]
 
 
-def cadastrar():
-    pass
+def editar_aluno(aluno: dict) -> str:
+    """Recebe um dicionário com os dados do aluno e atualiza o arquivo JSON.
+
+    Args:
+        aluno (dict): Informações do aluno
+
+    Returns:
+        str: Informativo do status da operação
+    """
+    dados = descriptografar_json(arquivo="alunos")
+    dados[aluno.pop("ra")] = aluno
+    criptografar_json(dados=dados, arquivo="alunos")
+    return f"Perfil atualizado."
 
 
 def add_turma(turma: dict) -> str:

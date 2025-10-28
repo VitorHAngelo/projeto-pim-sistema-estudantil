@@ -5,6 +5,12 @@ from datetime import datetime
 from dados import get_colaborador, editar_colaborador
 from telas.utils_tk import limpar_widgets
 from seguranca import gerar_senha_temp, hashear_senha
+from telas.utils_tk import (
+    formatar_cpf,
+    formatar_telefone,
+    verificar_email,
+    verificar_data,
+)
 
 
 FONTE = "Calibri"
@@ -20,12 +26,14 @@ def atualizar_dados():
     nascimento = "".join(
         [digit for digit in dados_usuario["nascimento"].get() if digit.isdigit()]
     )
-    usuario[cpf] = {
+    usuario = {
+        "cpf": cpf,
         "nome": dados_usuario["nome"].get(),
         "nascimento": nascimento,
         "email": dados_usuario["email"].get(),
         "telefone": telefone,
         "cargo": dados_usuario["cargo"].get(),
+        "senha": dados_usuario["senha"],
     }
     status = editar_colaborador(usuario)
     limpar_widgets(frame_edicao)
@@ -35,63 +43,6 @@ def atualizar_dados():
 def atalho_enter(event):
     if event.state in (40, 42, 262184, 262186) and event.keysym == "Return":
         atualizar_dados()
-
-
-def formatar_telefone(event, campo_telefone, entry):
-    telefone = list(campo_telefone.get())
-    if event.state == 40 and event.keysym == "Tab":
-        if len(telefone) == 11:
-            telefone.insert(0, "(")
-            telefone.insert(3, ")")
-            telefone.insert(9, "-")
-            entry.delete(0, tk.END)
-            entry.insert(0, "".join(telefone))
-        elif len(telefone) == 10:
-            telefone.insert(0, "(")
-            telefone.insert(3, ")")
-            telefone.insert(8, "-")
-            entry.delete(0, tk.END)
-            entry.insert(0, "".join(telefone))
-
-
-def formatar_cpf(event, campo, entry):
-    if event.state in (40, 262184) and event.keysym in TECLAS_IGNORADAS:
-        return
-    cpf = [char for char in campo.get() if char.isdigit()]
-    if len(cpf) >= 3:
-        cpf.insert(3, ".")
-    if len(cpf) >= 6:
-        cpf.insert(7, ".")
-    if len(cpf) >= 9:
-        cpf.insert(11, "-")
-    entry.delete(0, tk.END)
-    entry.insert(0, "".join(cpf[:14]))
-
-
-def formatar_email(event, campo, entry):
-    email = list(campo.get())
-    if not "@" in email or not "." in email or " " in email:
-        entry.config(fg="red")
-    else:
-        entry.config(fg="black")
-
-
-def formatar_data(event, campo, entry):
-    if event.state in (40, 262184) and event.keysym in TECLAS_IGNORADAS:
-        return
-    data = [letter for letter in campo.get() if letter.isdigit()]
-    if event.state == 40 and event.keysym == "Tab" and len(data) == 6:
-        if int("".join(data[-2:])) <= int(str(datetime.now().year)[2:]):
-            entry.insert(6, 20)
-        else:
-            entry.insert(6, 19)
-        return
-    if len(data) > 1:
-        data.insert(2, "/")
-    if len(data) > 4:
-        data.insert(5, "/")
-    entry.delete(0, tk.END)
-    entry.insert(0, "".join(data[:10]))
 
 
 def resetar_senha(cpf):
@@ -137,7 +88,7 @@ def reconstruir_frame(frame_conteudo, usuario_buscado):
     entry_nascimento.bind("<Return>", atalho_enter)
     entry_nascimento.bind(
         "<KeyPress>",
-        lambda event: formatar_data(event, campo_nascimento, entry_nascimento),
+        lambda event: verificar_data(event, campo_nascimento, entry_nascimento),
     )
 
     # CPF
@@ -161,7 +112,7 @@ def reconstruir_frame(frame_conteudo, usuario_buscado):
     dados_usuario["email"] = campo_email
     entry_email.bind("<Return>", atalho_enter)
     entry_email.bind(
-        "<KeyPress>", lambda event: formatar_email(event, campo_email, entry_email)
+        "<KeyPress>", lambda event: verificar_email(event, campo_email, entry_email)
     )
 
     # Telefone
@@ -184,6 +135,7 @@ def reconstruir_frame(frame_conteudo, usuario_buscado):
     campo_cargo = ttk.Combobox(
         frame_edicao, values=["Professor", "Coordenador"], font=(FONTE, 14)
     )
+    dados_usuario["cargo"] = campo_cargo
 
     # Popular campos
     entry_nome.insert(0, usuario_buscado["nome"])
@@ -193,6 +145,7 @@ def reconstruir_frame(frame_conteudo, usuario_buscado):
     entry_telefone.insert(0, usuario_buscado["telefone"])
     entry_cpf.config(state="readonly")
     campo_cargo.set(usuario_buscado["cargo"])
+    dados_usuario["senha"] = usuario_buscado["senha"]
 
     # Botões
     botao_resetar_senha = tk.Button(
@@ -237,9 +190,6 @@ def reconstruir_frame(frame_conteudo, usuario_buscado):
     botao_cancelar.grid(row=8, column=4, sticky="es", ipady=10, padx=2)
     botao_resetar_senha.grid(row=8, column=5, sticky="wes", ipady=10, padx=2)
     botao_salvar.grid(row=8, column=6, sticky="wes", ipady=10, padx=2)
-
-
-dados_usuario = {}
 
 
 def interface_busca(frame_conteudo):
@@ -288,6 +238,8 @@ def iniciar_edicao_colaborador(frame_conteudo):
     limpar_widgets(frame_conteudo)
     usuario_buscado = interface_busca(frame_conteudo)
 
+
+dados_usuario = {}
 
 if __name__ == "__main__":
     iniciar_edicao_colaborador()
