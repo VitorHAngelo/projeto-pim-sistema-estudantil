@@ -210,4 +210,4 @@ __marimo__/
 teste/
 files/*
 !files/EduSmart.ico
-!files/EduSmart.png
+!files/*.png
