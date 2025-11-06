@@ -1,10 +1,11 @@
 import tkinter as tk
-from tkinter import ttk
+import ttkbootstrap as ttk
 from tkinter import messagebox
 from telas.utils_tk import limpar_widgets
 from dados import add_turma
+from config import GUI_FONT
+import contexto
 
-FONTE = "Calibri"
 TECLAS_IGNORADAS = ("BackSpace", "Delete", "Left", "Up", "Down", "Right", "Return")
 
 
@@ -22,13 +23,15 @@ def cadastrar():
     if erros:
         for i in range(len(erros)):
             tk.Label(
-                frame_erros, text=erros[i], fg="red", font=(FONTE, 14, "bold")
+                frame_erros, text=erros[i], fg="red", font=(GUI_FONT, 14, "bold")
             ).grid(row=i, column=0, sticky="w")
         return
     turma[dados_turma["nome"].get()] = {
         "curso": dados_turma["curso"].get(),
         "periodo": dados_turma["periodo"].get(),
         "criador": dados_turma["criador"],
+        "alunos": [],
+        "atividades": [],
     }
     status = add_turma(turma)
     if status[0] in (1, 2):  # Se código for 1 ou 2
@@ -47,19 +50,14 @@ def cancelar():
     pass
 
 
-def atalho_enter(event):
-    if event.state in (40, 42, 262184, 262186) and event.keysym == "Return":
-        cadastrar()
-
-
-def reconstruir_frame(frame_conteudo, nome_colaborador):
-    limpar_widgets(frame_conteudo)
+def reconstruir_frame(nome_colaborador):
+    limpar_widgets()
 
     global frame_cadastro_turma
     global dados_turma
     dados_turma["criador"] = nome_colaborador
 
-    frame_cadastro_turma = tk.Frame(frame_conteudo)
+    frame_cadastro_turma = tk.Frame(contexto.frame_conteudo)
 
     for i in range(1, 10):
         frame_cadastro_turma.rowconfigure(i, minsize=20)
@@ -70,47 +68,56 @@ def reconstruir_frame(frame_conteudo, nome_colaborador):
 
     # Nome
     label_nome_turma = tk.Label(
-        frame_cadastro_turma, text="Nome da turma: ", font=(FONTE, 16, "bold")
+        frame_cadastro_turma, text="Nome da turma: ", font=(GUI_FONT, 16, "bold")
     )
     campo_nome_turma = tk.StringVar()
     entry_nome_turma = tk.Entry(
-        frame_cadastro_turma, textvariable=campo_nome_turma, font=(FONTE, 16)
+        frame_cadastro_turma, textvariable=campo_nome_turma, font=(GUI_FONT, 16)
     )
     dados_turma["nome"] = campo_nome_turma
-    entry_nome_turma.bind("<KeyPress>", atalho_enter)
+    entry_nome_turma.bind("<Return>", lambda event: cadastrar())
     entry_nome_turma.focus()
 
     # Curso
     label_nome_curso = tk.Label(
-        frame_cadastro_turma, text="Curso: ", font=(FONTE, 16, "bold")
+        frame_cadastro_turma, text="Curso: ", font=(GUI_FONT, 16, "bold")
     )
     campo_nome_curso = tk.StringVar()
     entry_nome_curso = tk.Entry(
-        frame_cadastro_turma, textvariable=campo_nome_curso, font=(FONTE, 16)
+        frame_cadastro_turma, textvariable=campo_nome_curso, font=(GUI_FONT, 16)
     )
     dados_turma["curso"] = campo_nome_curso
-    entry_nome_curso.bind("<KeyPress>", atalho_enter)
+    entry_nome_curso.bind("<Return>", lambda event: cadastrar())
 
     # Período
     label_periodo = tk.Label(
-        frame_cadastro_turma, text="Período: ", font=(FONTE, 16, "bold")
+        frame_cadastro_turma, text="Período: ", font=(GUI_FONT, 16, "bold")
     )
     campo_periodo = tk.StringVar()
     combobox_periodo = ttk.Combobox(
-        frame_cadastro_turma, textvariable=campo_periodo, font=(FONTE, 16)
+        frame_cadastro_turma, textvariable=campo_periodo, font=(GUI_FONT, 16)
     )
     combobox_periodo["values"] = ("Manhã", "Tarde", "Noite")
     dados_turma["periodo"] = campo_periodo
 
     # Botões
-    botao_salvar = tk.Button(
-        frame_cadastro_turma, text="Salvar", font=(FONTE, 14, "bold"), command=cadastrar
+    botao_salvar = ttk.Button(
+        frame_cadastro_turma,
+        text="Salvar",
+        bootstyle="primary",
+        command=cadastrar,
     )
-    botao_limpar = tk.Button(
-        frame_cadastro_turma, text="Limpar", font=(FONTE, 14), command=limpar
+    botao_limpar = ttk.Button(
+        frame_cadastro_turma,
+        text="Limpar",
+        bootstyle="primary-outline",
+        command=limpar,
     )
-    botao_cancelar = tk.Button(
-        frame_cadastro_turma, text="Cancelar", font=(FONTE, 14), command=cancelar
+    botao_cancelar = ttk.Button(
+        frame_cadastro_turma,
+        text="Cancelar",
+        bootstyle="primary-outline",
+        command=cancelar,
     )
 
     # Row 0
@@ -134,8 +141,8 @@ def reconstruir_frame(frame_conteudo, nome_colaborador):
 dados_turma = {}
 
 
-def iniciar_cadastro_turma(frame_conteudo, nome_colaborador):
-    return reconstruir_frame(frame_conteudo, nome_colaborador)
+def iniciar_cadastro_turma(nome_colaborador):
+    return reconstruir_frame(nome_colaborador)
 
 
 if __name__ == "__main__":

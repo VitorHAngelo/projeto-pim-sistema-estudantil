@@ -1,12 +1,12 @@
 import tkinter as tk
-from tkinter import ttk
+import ttkbootstrap as ttk
 from tkinter import messagebox
 from datetime import datetime
 from dados import get_turma, editar_turma
 from telas.utils_tk import limpar_widgets
+import contexto
+from config import GUI_FONT
 
-
-FONTE = "Calibri"
 TECLAS_IGNORADAS = ("BackSpace", "Delete", "Left", "Up", "Down", "Right", "Return")
 
 
@@ -18,22 +18,18 @@ def atualizar_dados():
         "criador": dados_turma["criador"],
     }
     status = editar_turma(turma)
-    limpar_widgets(frame_edicao_turma)
+    # Mostra a mensagem antes de limpar o frame para não usar um parent destruído
     messagebox.showinfo(
         "Edição", message=status, icon="info", parent=frame_edicao_turma
     )
+    limpar_widgets(frame_edicao_turma)
 
 
-def atalho_enter(event):
-    if event.state in (40, 42, 262184, 262186) and event.keysym == "Return":
-        atualizar_dados()
-
-
-def reconstruir_frame(frame_conteudo, turma_buscada):
+def reconstruir_frame(turma_buscada):
     global frame_edicao_turma
     global dados_turma
 
-    frame_edicao_turma = tk.Frame(frame_conteudo)
+    frame_edicao_turma = tk.Frame(contexto.frame_conteudo)
 
     for i in range(1, 10):
         frame_edicao_turma.rowconfigure(i, minsize=20)
@@ -44,34 +40,34 @@ def reconstruir_frame(frame_conteudo, turma_buscada):
 
     # Nome
     label_nome_turma = tk.Label(
-        frame_edicao_turma, text="Nome da turma: ", font=(FONTE, 16, "bold")
+        frame_edicao_turma, text="Nome da turma: ", font=(GUI_FONT, 16, "bold")
     )
     campo_nome_turma = tk.StringVar()
     entry_nome_turma = tk.Entry(
-        frame_edicao_turma, textvariable=campo_nome_turma, font=(FONTE, 16)
+        frame_edicao_turma, textvariable=campo_nome_turma, font=(GUI_FONT, 16)
     )
     dados_turma["nome"] = campo_nome_turma
-    entry_nome_turma.bind("<KeyPress>", atalho_enter)
+    entry_nome_turma.bind("<Return>", atualizar_dados)
     entry_nome_turma.focus()
 
     # Curso
     label_nome_curso = tk.Label(
-        frame_edicao_turma, text="Curso: ", font=(FONTE, 16, "bold")
+        frame_edicao_turma, text="Curso: ", font=(GUI_FONT, 16, "bold")
     )
     campo_nome_curso = tk.StringVar()
     entry_nome_curso = tk.Entry(
-        frame_edicao_turma, textvariable=campo_nome_curso, font=(FONTE, 16)
+        frame_edicao_turma, textvariable=campo_nome_curso, font=(GUI_FONT, 16)
     )
     dados_turma["curso"] = campo_nome_curso
-    entry_nome_curso.bind("<KeyPress>", atalho_enter)
+    entry_nome_curso.bind("<Return>", atualizar_dados)
 
     # Período
     label_periodo = tk.Label(
-        frame_edicao_turma, text="Período: ", font=(FONTE, 16, "bold")
+        frame_edicao_turma, text="Período: ", font=(GUI_FONT, 16, "bold")
     )
     campo_periodo = tk.StringVar()
     combobox_periodo = ttk.Combobox(
-        frame_edicao_turma, textvariable=campo_periodo, font=(FONTE, 16)
+        frame_edicao_turma, textvariable=campo_periodo, font=(GUI_FONT, 16)
     )
     combobox_periodo["values"] = ("Manhã", "Tarde", "Noite")
     dados_turma["periodo"] = campo_periodo
@@ -85,17 +81,17 @@ def reconstruir_frame(frame_conteudo, turma_buscada):
     campo_periodo.set(turma_buscada["periodo"])
 
     # Botões
-    botao_salvar = tk.Button(
+    botao_salvar = ttk.Button(
         frame_edicao_turma,
         text="Salvar",
-        font=(FONTE, 14, "bold"),
+        bootstyle="primary",
         command=atualizar_dados,
     )
-    botao_cancelar = tk.Button(
+    botao_cancelar = ttk.Button(
         frame_edicao_turma,
         text="Cancelar",
-        font=(FONTE, 14),
-        command=lambda: limpar_widgets(frame_edicao_turma),
+        bootstyle="primary-outline",
+        command=lambda: limpar_widgets(),
     )
 
     # Row 0
@@ -118,27 +114,28 @@ def reconstruir_frame(frame_conteudo, turma_buscada):
 dados_turma = {}
 
 
-def interface_busca(frame_conteudo):
+def interface_busca():
     global frame_busca_turma
-    frame_busca_turma = tk.Frame(frame_conteudo)
+    frame_busca_turma = tk.Frame(contexto.frame_conteudo)
     label_turma = tk.Label(
         frame_busca_turma,
         text="Digite o nome da turma para buscar:",
-        font=(FONTE, 16, "bold"),
+        font=(GUI_FONT, 16, "bold"),
     )
     campo_turma = tk.StringVar()
     entry_turma = tk.Entry(
-        frame_busca_turma, textvariable=campo_turma, font=(FONTE, 16)
+        frame_busca_turma, textvariable=campo_turma, font=(GUI_FONT, 16)
     )
     dados_turma["nome"] = entry_turma
     entry_turma.bind(
         "<Return>",
-        lambda event: buscar_turma(frame_conteudo, entry_turma.get(), event),
+        lambda event: buscar_turma(entry_turma.get(), event),
     )
-    botao_buscar = tk.Button(
+    botao_buscar = ttk.Button(
         frame_busca_turma,
         text="Buscar",
-        command=lambda: buscar_turma(frame_conteudo, entry_turma.get()),
+        bootstyle="primary",
+        command=lambda: buscar_turma(entry_turma.get()),
     )
 
     frame_busca_turma.grid()
@@ -148,19 +145,19 @@ def interface_busca(frame_conteudo):
     botao_buscar.grid(row=2, column=4, sticky="e")
 
 
-def buscar_turma(frame_conteudo, nome, event=None):
-    limpar_widgets(frame_busca_turma)
+def buscar_turma(nome, event=None):
+    limpar_widgets()
     turma_buscada = get_turma(nome)
     if turma_buscada != None:
-        reconstruir_frame(frame_conteudo, turma_buscada)
+        reconstruir_frame(turma_buscada)
     else:
         messagebox.showinfo("Inválido.", message="Turma não localizada.")
-        iniciar_edicao_turma(frame_conteudo)
+        iniciar_edicao_turma()
 
 
-def iniciar_edicao_turma(frame_conteudo):
-    limpar_widgets(frame_conteudo)
-    interface_busca(frame_conteudo)
+def iniciar_edicao_turma():
+    limpar_widgets()
+    interface_busca()
 
 
 if __name__ == "__main__":

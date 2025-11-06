@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-USERNAME = "smarteduhelper@gmail.com"
+USERNAME = "EduSmarthelper@gmail.com"
 PASSWORD = get_env_key("EMAIL_PASSWORD")
 
 usuario = {"nome": "Vitor Angelo", "email": "vitorcincerre@hotmail.com"}
@@ -18,14 +18,14 @@ def novo_email(usuario: dict, senha: str) -> None:
         usuario (dict): {'nome': 'Name', 'email': 'email@domain.com'}
         senha (str): senha123
     """
-    corpo = f"""    Olá {usuario['nome']},\n\nAtendendo a solicitação de redefinição de sua senha, estamos enviando este email para informar sua nova senha provisória no sistema SmartEdu.
+    corpo = f"""    Olá {usuario['nome']},\n\nAtendendo a solicitação de redefinição de sua senha, estamos enviando este email para informar sua nova senha provisória no sistema EduSmart.
 Favor realizar o seu login na plataforma e alterar sua senha.
     
 {senha}
     
 Qualquer dúvida, favor contatar o responsável pela sua organização."""
     mensagem = MIMEText(corpo, "plain")
-    mensagem["Subject"] = "SmartEdu - Nova senha de acesso"
+    mensagem["Subject"] = "EduSmart - Nova senha de acesso"
     mensagem["From"] = USERNAME
     mensagem["To"] = usuario["email"]
 

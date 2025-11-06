@@ -1,18 +1,17 @@
 import tkinter as tk
-from tkinter import ttk
+import ttkbootstrap as ttk
 from tkinter import messagebox
-from datetime import datetime
-from dados import add_aluno
+from dados import add_aluno, get_turmas
 from telas.utils_tk import limpar_widgets
-from dados import get_next_ra
 from telas.utils_tk import (
     formatar_cpf,
     formatar_telefone,
     verificar_email,
     verificar_data,
 )
+import contexto
+from config import GUI_FONT
 
-FONTE = "Calibri"
 TECLAS_IGNORADAS = (
     "BackSpace",
     "Delete",
@@ -26,7 +25,9 @@ TECLAS_IGNORADAS = (
 )
 
 
-def cadastrar():
+def cadastrar(event=None):
+    # Limpa apenas a área de erros antes da validação
+    limpar_widgets(frame_erros)
     dados_aluno = {}
     erros = []
     # CPF
@@ -49,26 +50,28 @@ def cadastrar():
     if len(nascimento) < 8:
         erros.append("- Data de nascimento inválida.")
     # EMAIL
-    if not "@" in aluno["email"].get() or not "." in aluno["email"].get():
+    if not verificar_email(campo=aluno["email"]):
         erros.append("- Email inválido.")
-    frame_erros = tk.Frame(frame_cadastro_aluno, width=100, height=100)
-    for i in range(6):
-        frame_erros.rowconfigure(i, minsize=5, weight=1)
-    frame_erros.grid(row=7, column=0)
+    # TURMAS
+    turma = aluno["turma"].get()
+    if not turma in get_turmas() and turma:
+        erros.append("- Turma inexistente.")
     if erros:
         for i in range(len(erros)):
             tk.Label(
-                frame_erros, text=erros[i], fg="red", font=(FONTE, 14, "bold")
+                frame_erros, text=erros[i], fg="red", font=(GUI_FONT, 14, "bold")
             ).grid(row=i, column=0, sticky="w")
         return
     dados_aluno = {
-        "nome": aluno["nome"].get(),
+        "nome": str(aluno["nome"].get()).title(),
         "cpf": cpf,
         "nascimento": nascimento,
-        "email": aluno["email"].get(),
+        "email": str(aluno["email"].get()).lower(),
         "telefone": telefone,
         "telefone_resp": telefone_resp,
+        "turma": turma if turma else None,
         "obs": aluno["obs"].get("1.0", "end-1c"),
+        "notas": {},
     }
     status = add_aluno(dados_aluno)
     if status[0] in (1, 2):  # Se código for 1 ou 2
@@ -87,18 +90,13 @@ def cancelar():
     pass
 
 
-def atalho_enter(event):
-    if event.state in (40, 42, 262184, 262186) and event.keysym == "Return":
-        cadastrar()
+def reconstruir_frame():
+    limpar_widgets()
 
-
-def reconstruir_frame(frame_conteudo):
-    limpar_widgets(frame_conteudo)
-
-    global frame_cadastro_aluno
+    global frame_cadastro_aluno, frame_erros
     global aluno
 
-    frame_cadastro_aluno = tk.Frame(frame_conteudo)
+    frame_cadastro_aluno = tk.Frame(contexto.frame_conteudo)
 
     for i in range(1, 10):
         frame_cadastro_aluno.rowconfigure(i, minsize=20)
@@ -106,74 +104,87 @@ def reconstruir_frame(frame_conteudo):
     frame_cadastro_aluno.columnconfigure((1, 2, 3, 4, 5), pad=5, weight=0, minsize=10)
     frame_cadastro_aluno.grid(row=0, column=0, sticky="sew", pady=15)
 
+    frame_erros = tk.Frame(frame_cadastro_aluno, width=100, height=100)
+    for i in range(6):
+        frame_erros.rowconfigure(i, minsize=5, weight=1)
+    frame_erros.grid(row=7, column=0, sticky="nw", columnspan=2)
+
     # Nome
-    label_nome = tk.Label(frame_cadastro_aluno, text="Nome: ", font=(FONTE, 16, "bold"))
+    label_nome = tk.Label(
+        frame_cadastro_aluno, text="Nome: ", font=(GUI_FONT, 16, "bold")
+    )
     campo_nome = tk.StringVar()
     entry_nome = tk.Entry(
-        frame_cadastro_aluno, textvariable=campo_nome, font=(FONTE, 16)
+        frame_cadastro_aluno, textvariable=campo_nome, font=(GUI_FONT, 16)
     )
     aluno["nome"] = campo_nome
-    entry_nome.bind("<KeyPress>", atalho_enter)
+    entry_nome.bind("<Return>", cadastrar)
     entry_nome.focus()
 
     # Data Nascimento
     label_nascimento = tk.Label(
-        frame_cadastro_aluno, text="Nascimento: ", font=(FONTE, 16, "bold")
+        frame_cadastro_aluno, text="Nascimento: ", font=(GUI_FONT, 16, "bold")
     )
     campo_nascimento = tk.StringVar()
     entry_nascimento = tk.Entry(
-        frame_cadastro_aluno, textvariable=campo_nascimento, font=(FONTE, 16)
+        frame_cadastro_aluno, textvariable=campo_nascimento, font=(GUI_FONT, 16)
     )
     aluno["nascimento"] = campo_nascimento
-    entry_nascimento.bind("<Return>", atalho_enter)
+    entry_nascimento.bind("<Return>", cadastrar)
     entry_nascimento.bind(
         "<KeyPress>",
         lambda event: verificar_data(event, campo_nascimento, entry_nascimento),
     )
 
     # CPF
-    label_cpf = tk.Label(frame_cadastro_aluno, text="CPF: ", font=(FONTE, 16, "bold"))
+    label_cpf = tk.Label(
+        frame_cadastro_aluno, text="CPF: ", font=(GUI_FONT, 16, "bold")
+    )
     frame_cadastro_aluno.label_cpf_invalido = tk.Label(
         frame_cadastro_aluno,
         text="",
-        font=(FONTE, 16, "bold"),
+        font=(GUI_FONT, 16, "bold"),
         fg="red",
     )
     campo_cpf = tk.StringVar()
-    entry_cpf = tk.Entry(frame_cadastro_aluno, textvariable=campo_cpf, font=(FONTE, 16))
+    entry_cpf = tk.Entry(
+        frame_cadastro_aluno, textvariable=campo_cpf, font=(GUI_FONT, 16)
+    )
     aluno["cpf"] = campo_cpf
-    entry_cpf.bind("<Return>", atalho_enter)
+    entry_cpf.bind("<Return>", cadastrar)
     entry_cpf.bind(
         "<KeyPress>", lambda event: formatar_cpf(event, campo_cpf, entry_cpf)
     )
 
     # Email
     label_email = tk.Label(
-        frame_cadastro_aluno, text="E-mail: ", font=(FONTE, 16, "bold")
+        frame_cadastro_aluno, text="E-mail: ", font=(GUI_FONT, 16, "bold")
     )
     campo_email = tk.StringVar()
     entry_email = tk.Entry(
-        frame_cadastro_aluno, textvariable=campo_email, font=(FONTE, 16)
+        frame_cadastro_aluno, textvariable=campo_email, font=(GUI_FONT, 16)
     )
     aluno["email"] = campo_email
-    entry_email.bind("<Return>", atalho_enter)
+    entry_email.bind("<Return>", cadastrar)
     entry_email.bind(
-        "<KeyPress>", lambda event: verificar_email(event, campo_email, entry_email)
+        "<KeyPress>", lambda event: verificar_email(campo_email, event, entry_email)
     )
     label_validacao_email = tk.Label(
-        frame_cadastro_aluno, text="Digite um email válido.", font=(FONTE, 12, "bold")
+        frame_cadastro_aluno,
+        text="Digite um email válido.",
+        font=(GUI_FONT, 12, "bold"),
     )
 
     # Telefone
     label_telefone = tk.Label(
-        frame_cadastro_aluno, text="Telefone: ", font=(FONTE, 16, "bold")
+        frame_cadastro_aluno, text="Telefone: ", font=(GUI_FONT, 16, "bold")
     )
     campo_telefone = tk.StringVar()
     entry_telefone = tk.Entry(
-        frame_cadastro_aluno, textvariable=campo_telefone, font=(FONTE, 16)
+        frame_cadastro_aluno, textvariable=campo_telefone, font=(GUI_FONT, 16)
     )
     aluno["telefone"] = campo_telefone
-    entry_telefone.bind("<Return>", atalho_enter)
+    entry_telefone.bind("<Return>", cadastrar)
     entry_telefone.bind(
         "<KeyPress>",
         lambda event: formatar_telefone(event, campo_telefone, entry_telefone),
@@ -181,14 +192,14 @@ def reconstruir_frame(frame_conteudo):
 
     # Telefone2
     label_telefone_resp = tk.Label(
-        frame_cadastro_aluno, text="Telefone/Responsável: ", font=(FONTE, 16, "bold")
+        frame_cadastro_aluno, text="Telefone/Responsável: ", font=(GUI_FONT, 16, "bold")
     )
     campo_telefone_resp = tk.StringVar()
     entry_telefone_resp = tk.Entry(
-        frame_cadastro_aluno, textvariable=campo_telefone_resp, font=(FONTE, 16)
+        frame_cadastro_aluno, textvariable=campo_telefone_resp, font=(GUI_FONT, 16)
     )
     aluno["telefone_resp"] = campo_telefone_resp
-    entry_telefone_resp.bind("<Return>", atalho_enter)
+    entry_telefone_resp.bind("<Return>", cadastrar)
     entry_telefone_resp.bind(
         "<KeyPress>",
         lambda event: formatar_telefone(
@@ -196,24 +207,42 @@ def reconstruir_frame(frame_conteudo):
         ),
     )
 
+    # Turma
+    label_turma = tk.Label(
+        frame_cadastro_aluno, text="Turma: ", font=(GUI_FONT, 16, "bold")
+    )
+    campo_turma = ttk.Combobox(
+        frame_cadastro_aluno, values=get_turmas(), font=(GUI_FONT, 14)
+    )
+    aluno["turma"] = campo_turma
+
     # Observacoes
     label_obs = tk.Label(
-        frame_cadastro_aluno, text="Observações: ", font=(FONTE, 16, "bold")
+        frame_cadastro_aluno, text="Observações: ", font=(GUI_FONT, 16, "bold")
     )
-    entry_obs = tk.Text(frame_cadastro_aluno, width=60, height=6, font=(FONTE, 12))
+    entry_obs = tk.Text(frame_cadastro_aluno, width=60, height=6, font=(GUI_FONT, 12))
     scrollbar = tk.Scrollbar(frame_cadastro_aluno, command=entry_obs.yview)
     aluno["obs"] = entry_obs
     entry_obs.config(yscrollcommand=scrollbar.set)
 
     # Botões
-    botao_salvar = tk.Button(
-        frame_cadastro_aluno, text="Salvar", font=(FONTE, 14, "bold"), command=cadastrar
+    botao_salvar = ttk.Button(
+        frame_cadastro_aluno,
+        text="Salvar",
+        bootstyle="primary",
+        command=cadastrar,
     )
-    botao_limpar = tk.Button(
-        frame_cadastro_aluno, text="Limpar", font=(FONTE, 14), command=limpar
+    botao_limpar = ttk.Button(
+        frame_cadastro_aluno,
+        text="Limpar",
+        bootstyle="primary-outline",
+        command=limpar,
     )
-    botao_cancelar = tk.Button(
-        frame_cadastro_aluno, text="Cancelar", font=(FONTE, 14), command=cancelar
+    botao_cancelar = ttk.Button(
+        frame_cadastro_aluno,
+        text="Cancelar",
+        bootstyle="primary-outline",
+        command=cancelar,
     )
 
     # Row 1
@@ -236,6 +265,8 @@ def reconstruir_frame(frame_conteudo):
 
     # Row 4
     label_obs.grid(row=4, column=0, ipady=10, sticky="w")
+    label_turma.grid(row=4, column=3, pady=10, sticky="e")
+    campo_turma.grid(row=4, column=4, pady=10, sticky="w")
     entry_obs.grid(row=5, column=0, ipady=10, columnspan=3, sticky="w", padx=15)
     scrollbar.grid(row=5, column=2, sticky="nse")
 
@@ -248,8 +279,8 @@ def reconstruir_frame(frame_conteudo):
 aluno = {}
 
 
-def iniciar_cadastro_aluno(frame_conteudo):
-    return reconstruir_frame(frame_conteudo)
+def iniciar_cadastro_aluno():
+    return reconstruir_frame()
 
 
 if __name__ == "__main__":

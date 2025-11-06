@@ -1,162 +1,314 @@
 from dados import checar_json_existe
 from seguranca import checar_existencia_env
-from telas.interface_login import tela_login
-from telas.interface_cadastro_colaborador import iniciar_cadastro
-from telas.alterar_senha_admin import alterar_senha_admin
-from telas.interface_edicao_colaborador import iniciar_edicao_colaborador
-from telas.interface_edicao_turma import iniciar_edicao_turma
-from telas.alterar_senha_colaborador import alterar_senha_colaborador
-from telas.utils_tk import ui_login, ui_geral
+import ttkbootstrap as ttk
+from config import FILES_PATH, GUI_FONT
 import tkinter as tk
-from config import FILES_PATH
-from telas.interface_cadastro_turma import iniciar_cadastro_turma
-from telas.utils_tk import encerrar
-from telas.interface_cadastro_aluno import iniciar_cadastro_aluno
-from telas.interface_edicao_aluno import iniciar_edicao_aluno
-from telas.utils_tk import alt_tamanho_janela
+import locale
+import contexto
+from telas import (
+    tela_login,
+    iniciar_cadastro,
+    alterar_senha_admin,
+    iniciar_edicao_colaborador,
+    iniciar_edicao_turma,
+    alterar_senha_colaborador,
+    iniciar_cadastro_turma,
+    iniciar_cadastro_aluno,
+    iniciar_edicao_aluno,
+    ui_login,
+    encerrar,
+    alt_tamanho_janela,
+    criar_interface_atividades,
+    criar_diario,
+)
 
 
-def criar_barra_admin(janela):
-    barra_admin = tk.Menu(janela)
-    janela.config(menu=barra_admin)
-    alt_tamanho_janela(janela, 1300, 800)
+def criar_barra_admin():
+    alt_tamanho_janela(1350, 800)
 
-    opcoes_menu_admin = tk.Menu(barra_admin, tearoff=0)
-    opcoes_menu_admin.add_command(
+    frame_perfil = tk.Frame(logo_frame)
+    frame_perfil.grid(row=0, column=6, sticky="ne")
+    nome = " ".join(contexto.colaborador["nome"].split()[0:2])
+    ttk.Label(frame_perfil, text=nome, font=(GUI_FONT, 16)).grid(
+        row=0, column=0, sticky="n", pady=8
+    )
+
+    menubutton_colaboradores = ttk.Menubutton(
+        logo_frame, text="Colaboradores", style="Outline.TMenubutton"
+    )
+    menu_colaboradores = ttk.Menu(
+        menubutton_colaboradores,
+    )
+    menu_colaboradores.add_command(
         label="Novo colaborador",
-        command=lambda: iniciar_cadastro(frame_conteudo),
+        command=lambda: iniciar_cadastro(),
     )
-    opcoes_menu_admin.add_command(
+    menu_colaboradores.add_command(
         label="Editar colaborador",
-        command=lambda: iniciar_edicao_colaborador(frame_conteudo),
+        command=lambda: iniciar_edicao_colaborador(),
     )
-    opcoes_menu_admin.add_separator()
-    opcoes_menu_admin.add_command(
-        label="Alterar senha Admin", command=lambda: alterar_senha_admin(frame_conteudo)
+
+    menubutton_colaboradores["menu"] = menu_colaboradores
+    menubutton_colaboradores.grid(row=0, column=2, pady=3, padx=5, sticky="ne")
+
+    ttk.Separator(
+        logo_frame,
+        orient=tk.VERTICAL,
+        bootstyle="primary",
+    ).grid(row=0, column=3, padx=15, sticky="n", pady=2)
+
+    profile = tk.PhotoImage(file=FILES_PATH + "user.png")
+    menubutton_profile = ttk.Menubutton(
+        frame_perfil, image=profile, style="Outline.TMenubutton"
     )
-    opcoes_menu_admin.add_command(label="Logoff", command=logoff)
-
-    barra_admin.add_cascade(label="Ações", menu=opcoes_menu_admin)
-
-    return barra_admin
-
-
-def criar_barra_coordenador(janela):
-    barra_coordenador = tk.Menu(janela)
-    janela.config(menu=barra_coordenador)
-    alt_tamanho_janela(janela, 1300, 800)
-
-    # opcoes_menu_coordenador.add_separator()
-    # Ações
-    opcoes_menu_coordenador = tk.Menu(barra_coordenador, tearoff=0)
-    opcoes_menu_coordenador.add_command(
+    menubutton_profile.img = profile
+    menu = ttk.Menu(
+        menubutton_profile,
+    )
+    menu.add_command(
         label="Alterar senha",
-        command=lambda: alterar_senha_colaborador(frame_conteudo, colaborador),
+        command=lambda: alterar_senha_admin(),
     )
-    opcoes_menu_coordenador.add_command(label="Logoff", command=logoff)
+    menu.add_command(label="Sair", command=logoff)
 
-    barra_coordenador.add_cascade(label="Ações", menu=opcoes_menu_coordenador)
+    menubutton_profile["menu"] = menu
+    menubutton_profile.grid(row=0, column=2, pady=8, padx=5, sticky="n")
 
-    # Turmas
-    opcoes_menu_turma = tk.Menu(barra_coordenador, tearoff=0)
-    opcoes_menu_turma.add_command(
-        label="Nova turma",
-        command=lambda: iniciar_cadastro_turma(frame_conteudo, colaborador["nome"]),
-    )
-    opcoes_menu_turma.add_command(
-        label="Editar turma", command=lambda: iniciar_edicao_turma(frame_conteudo)
-    )
-    barra_coordenador.add_cascade(label="Turmas", menu=opcoes_menu_turma)
+
+def criar_barra_coordenador():
+    alt_tamanho_janela(1350, 800)
 
     # Alunos
-    opcoes_menu_alunos = tk.Menu(barra_coordenador, tearoff=0)
-    opcoes_menu_alunos.add_command(
-        label="Adicionar Aluno",
-        command=lambda: iniciar_cadastro_aluno(frame_conteudo),
+    menubutton_alunos = ttk.Menubutton(
+        logo_frame, text="Alunos", style="Outline.TMenubutton"
     )
-    opcoes_menu_alunos.add_command(
-        label="Editar Aluno", command=lambda: iniciar_edicao_aluno(frame_conteudo)
+    menu_alunos = ttk.Menu(
+        menubutton_alunos,
     )
-    barra_coordenador.add_cascade(label="Alunos", menu=opcoes_menu_alunos)
-    return barra_coordenador
+    menu_alunos.add_command(
+        label="Novo Aluno",
+        command=lambda: iniciar_cadastro_aluno(),
+    )
+    menu_alunos.add_command(
+        label="Editar Aluno",
+        command=lambda: iniciar_edicao_aluno(),
+    )
 
+    menubutton_alunos["menu"] = menu_alunos
+    menubutton_alunos.grid(row=0, column=1, pady=3, padx=5, sticky="ne")
 
-def criar_barra_professor(janela):
-    barra_professor = tk.Menu(janela)
-    janela.config(menu=barra_professor)
-    alt_tamanho_janela(janela, 1300, 800)
+    ttk.Separator(
+        logo_frame,
+        orient=tk.VERTICAL,
+        bootstyle="primary",
+    ).grid(row=0, column=3, padx=15, sticky="n", pady=2)
 
-    opcoes_menu_coordenador = tk.Menu(barra_professor, tearoff=0)
-    opcoes_menu_coordenador.add_command(
-        label="Nova turma",
-        command=lambda: iniciar_cadastro_turma(frame_conteudo, colaborador["nome"]),
+    # Turmas
+    menubutton_turmas = ttk.Menubutton(
+        logo_frame, text="Turmas", style="Outline.TMenubutton"
     )
-    opcoes_menu_coordenador.add_command(
-        label="Editar turma", command=lambda: iniciar_edicao_turma(frame_conteudo)
+    menu_turmas = ttk.Menu(
+        menubutton_turmas,
     )
-    opcoes_menu_coordenador.add_separator()
-    opcoes_menu_coordenador.add_command(
+    menu_turmas.add_command(
+        label="Nova Turma",
+        command=lambda: iniciar_cadastro_turma(contexto.colaborador),
+    )
+    menu_turmas.add_command(
+        label="Editar Turma",
+        command=lambda: iniciar_edicao_turma(),
+    )
+
+    menubutton_turmas["menu"] = menu_turmas
+    menubutton_turmas.grid(row=0, column=2, pady=3, padx=5, sticky="ne")
+
+    ttk.Separator(
+        logo_frame,
+        orient=tk.VERTICAL,
+        bootstyle="primary",
+    ).grid(row=0, column=3, padx=15, sticky="n", pady=2)
+
+    # Profile
+    frame_perfil = tk.Frame(logo_frame)
+    frame_perfil.grid(row=0, column=6, sticky="ne")
+    cargo = "Prof. " if contexto.colaborador["cargo"] == "Professor" else "Coord. "
+    nome = cargo + " ".join(contexto.colaborador["nome"].split()[0:2])
+    ttk.Label(frame_perfil, text=nome, font=(GUI_FONT, 16)).grid(
+        row=0, column=0, sticky="n", pady=8
+    )
+    profile = tk.PhotoImage(file=FILES_PATH + "user.png")
+    menubutton_profile = ttk.Menubutton(
+        frame_perfil, image=profile, style="Outline.TMenubutton"
+    )
+    menubutton_profile.img = profile
+    menu = ttk.Menu(
+        menubutton_profile,
+    )
+    menu.add_command(
         label="Alterar senha",
-        command=lambda: alterar_senha_colaborador(frame_conteudo, colaborador),
+        command=lambda: alterar_senha_colaborador(contexto.colaborador),
     )
-    opcoes_menu_coordenador.add_command(label="Logoff", command=logoff)
+    menu.add_command(label="Sair", command=logoff)
 
-    barra_professor.add_cascade(label="Ações", menu=opcoes_menu_coordenador)
+    menubutton_profile["menu"] = menu
+    menubutton_profile.grid(row=0, column=2, pady=8, padx=5, sticky="n")
 
-    return barra_professor
+
+# Professor
+def criar_barra_professor():
+    alt_tamanho_janela(1350, 800)
+
+    # Profile
+    frame_perfil = tk.Frame(logo_frame)
+    frame_perfil.grid(row=0, column=6, sticky="ne")
+    cargo = "Prof. " if contexto.colaborador["cargo"] == "Professor" else "Coord. "
+    nome = cargo + " ".join(contexto.colaborador["nome"].split()[0:2])
+    ttk.Label(frame_perfil, text=nome, font=(GUI_FONT, 16)).grid(
+        row=0, column=0, sticky="n", pady=8
+    )
+    profile = tk.PhotoImage(file=FILES_PATH + "user.png")
+    menubutton_profile = ttk.Menubutton(
+        frame_perfil, image=profile, style="Outline.TMenubutton"
+    )
+    menubutton_profile.img = profile
+    menu = ttk.Menu(
+        menubutton_profile,
+    )
+    menu.add_command(
+        label="Alterar senha",
+        command=lambda: alterar_senha_colaborador(
+            contexto.frame_conteudo, contexto.colaborador
+        ),
+    )
+    menu.add_command(label="Sair", command=logoff)
+
+    menubutton_profile["menu"] = menu
+    menubutton_profile.grid(row=0, column=2, pady=8, padx=5, sticky="n")
+
+    botao_diario = ttk.Button(
+        logo_frame,
+        text="Diário",
+        command=lambda: criar_diario(contexto.colaborador),
+        style="MenuButtons.Primary.TButton",
+    )
+    botao_atividades = ttk.Button(
+        logo_frame,
+        text="Atividades",
+        command=lambda: criar_interface_atividades(contexto.colaborador),
+        style="MenuButtons.Primary.TButton",
+    )
+    botao_ia = ttk.Button(
+        logo_frame,
+        text="I.A.",
+        command=lambda: print("I.A."),
+        style="MenuButtons.Primary.TButton",
+    )
+
+    ttk.Separator(
+        logo_frame,
+        orient=tk.VERTICAL,
+        bootstyle="primary",
+    ).grid(row=0, column=4, padx=15, sticky="n", pady=2)
+
+    botao_diario.grid(row=0, column=1, pady=5, padx=5, sticky="n")
+    botao_atividades.grid(row=0, column=2, pady=5, padx=5, sticky="n")
+    botao_ia.grid(row=0, column=3, pady=5, padx=5, sticky="n")
 
 
 def logoff():
-    global colaborador
-    colaborador = {}
+    contexto.colaborador = {}
 
-    for widget in janela.winfo_children():
+    for widget in contexto.janela.winfo_children():
         widget.destroy()
 
     login()
 
 
 def login():
-    global frame_conteudo, colaborador
-    ui_login(janela)
+    global logo_frame
+    ui_login()
 
-    colaborador = tela_login(janela)
+    contexto.colaborador = tela_login()
+    contexto.colaborador["nome"] = contexto.colaborador.get("nome", "Administrador")
 
-    frame_conteudo = tk.Frame(janela)
-    frame_conteudo.grid(row=2, column=0, sticky="nsew", padx=0)
-    frame_conteudo.grid_propagate(True)
-    if colaborador:
-        janela.login_logo_frame.destroy()
-        ui_geral(janela)
-        if colaborador.get("login", None) == "Admin":
-            criar_barra_admin(janela)
-        elif colaborador.get("cargo", None) == "Coordenador":
-            criar_barra_coordenador(janela)
-        elif colaborador.get("cargo", None) == "Professor":
-            criar_barra_professor(janela)
+    contexto.frame_conteudo = tk.Frame(contexto.janela)
+    contexto.frame_conteudo.grid(row=2, column=0, sticky="nsew", padx=10)
+    contexto.frame_conteudo.grid_propagate(True)
+    if contexto.colaborador:
+        contexto.janela.login_logo_frame.destroy()
+        # UI
+        contexto.janela.columnconfigure(0, weight=1)
+        logo_frame = tk.Frame(
+            contexto.janela,
+            padx=10,
+            relief="solid",
+        )
+        logo_frame.columnconfigure(0, weight=1)
+        logo_frame.grid(row=0, column=0, sticky="ew")
+        logo = tk.PhotoImage(file=FILES_PATH + "EduSmart2.png")
+        label_logo = tk.Label(logo_frame, image=logo)
+        label_logo.img = logo
+        label_logo.grid(row=0, column=0, sticky="nw")
+
+        ttk.Separator(logo_frame, orient=tk.HORIZONTAL).grid(
+            row=1, column=0, columnspan=10, sticky="nwe"
+        )
+        # Checa por cargo
+        if contexto.colaborador.get("login", None) == "Admin":
+            criar_barra_admin()
+        elif contexto.colaborador.get("cargo", None) == "Coordenador":
+            criar_barra_coordenador()
+        elif contexto.colaborador.get("cargo", None) == "Professor":
+            criar_barra_professor()
 
 
 def main():
-    global janela, frame_conteudo, colaborador
     checar_existencia_env()
     checar_json_existe()
 
-    janela = tk.Tk()
+    contexto.janela = ttk.Window()
+    # Estilo
+    style = ttk.Style(theme="cosmo")
+    style.configure("TButton", font=(GUI_FONT, 13))
+    style.configure(
+        "Outline.TMenubutton",
+        bordercolor="white",
+        font=(GUI_FONT, 16),
+        foreground="black",
+        arrowcolor="black",
+    )
+    # Botões barra menu
+    style.configure(
+        "MenuButtons.Primary.TButton",
+        font=(GUI_FONT, 16),
+        borderwidth=0,
+        background="white",
+        foreground="black",
+    )
+    style.map(
+        "MenuButtons.Primary.TButton",
+        background=[("active", "#EEF3FD")],
+        foreground=[("active", "black")],
+    )
 
-    janela.protocol("WM_DELETE_WINDOW", lambda: encerrar(janela))
-    janela.title("Sistema Estudantil")
-    janela.iconbitmap(FILES_PATH + "SmartEdu.ico")
-    alt_tamanho_janela(janela, 500, 500)
-    janela.rowconfigure(0, weight=0, minsize=10)
-    janela.rowconfigure(1, weight=0)
-    janela.rowconfigure(2, weight=1)
+    contexto.janela.option_add("*Menu.font", (GUI_FONT, 15))
 
-    frame_conteudo = tk.Frame(janela)
+    contexto.janela.protocol("WM_DELETE_WINDOW", encerrar)
+    contexto.janela.title("EduSmart")
+    contexto.janela.iconbitmap(FILES_PATH + "EduSmart.ico")
+    alt_tamanho_janela(500, 500)
+    contexto.janela.rowconfigure(0, weight=0, minsize=10)
+    contexto.janela.rowconfigure(1, weight=0)
+    contexto.janela.rowconfigure(2, weight=1)
+
+    contexto.frame_conteudo = tk.Frame(contexto.janela)
 
     login()
 
-    janela.mainloop()
+    contexto.janela.mainloop()
 
+
+locale.setlocale(locale.LC_TIME, "pt_BR")
 
 if __name__ == "__main__":
     main()

@@ -3,6 +3,7 @@ import os
 from paths import FILES_PATH
 from seguranca import get_fernet
 import re
+from tkinter import messagebox
 
 FILE_NAMES = {
     "colaboradores": "colaboradores.json",
@@ -85,15 +86,14 @@ def get_aluno_by_ra(ra: str):
     usuario: dict = dados.get(ra, None)
     if usuario == None:
         return None
-    print(usuario)
     return {"ra": ra, **usuario}
 
 
 def get_alunos_by_name(busca: str):
-    """Espera receber o RA do aluno e retorna suas informações
+    """Espera receber um nome e retorna alunos compatíveis
 
     Args:
-        ra (str): RA do aluno
+        busca (str): nome do aluno
 
     Returns:
         dict: Lista de ocorrências correspondentes a busca no formato {nome: ra,}
@@ -111,6 +111,15 @@ def get_alunos_by_name(busca: str):
         nome: ra for nome, ra in dicionario_alunos.items() if regex.search(nome)
     }
     return nomes_compativeis
+
+
+def get_alunos_turma(turma: str):
+    dados: dict = descriptografar_json("alunos")
+    alunos = {}
+    for ra, informacoes in dados.items():
+        if informacoes["turma"] == turma:
+            alunos[ra] = informacoes
+    return alunos
 
 
 def add_colaborador(usuario: dict) -> str:
@@ -237,11 +246,40 @@ def get_turma(identificador):
         return {"nome": identificador, **dados[identificador]}
 
 
+def excluir_atividade(nome_atividade, turma):
+    dados_turma = get_turma(turma)
+    for atividade in dados_turma["atividades"]:
+        if atividade["nome"] == nome_atividade:
+            dados_turma["atividades"].remove(atividade)
+            dados_turma.pop("nome")
+            editar_turma({turma: dados_turma})
+            return
+
+
+def get_turmas():
+    """Retorna lista de turmas
+
+    Args:
+
+    Returns:
+        list: Nomes das turmas
+    """
+    dados = descriptografar_json("turmas")
+    return [turma for turma in dados.keys()]
+
+
+def get_atividades(turma):
+    if turma in get_turmas():
+        return descriptografar_json("turmas")[turma]["atividades"]
+    else:
+        return []
+
+
 def editar_turma(turma: dict) -> str:
     """Recebe um dicionário com os dados da turma e atualiza o arquivo JSON.
 
     Args:
-        usuario (dict): Informações da turma
+        turma (dict): Informações da turma
 
     Returns:
         str: Informativo do status da operação

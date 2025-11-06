@@ -1,15 +1,16 @@
 import tkinter as tk
+import ttkbootstrap as ttk
 from tkinter import messagebox
 from seguranca import get_env_key
 from telas.utils_tk import encerrar
 from dados import get_colaborador, editar_colaborador
 from seguranca import verificar_senha, gerar_senha_temp, hashear_senha
 from email_tools import novo_email
+from config import GUI_FONT
+import contexto
 
-FONTE = "Calibri"
 
-
-def realizar_login(janela):
+def realizar_login():
     global perfil
     login = campo_login.get()
     senha = campo_senha.get()
@@ -17,7 +18,7 @@ def realizar_login(janela):
     campo_senha.delete(0, tk.END)
     if login == "Admin" and senha == get_env_key("ADMINISTRADOR"):
         frame_login.destroy()
-        janela.concluido.set(True)
+        contexto.janela.concluido.set(True)
         perfil = {"login": "Admin"}
     else:
         colaborador = get_colaborador(login)
@@ -25,10 +26,11 @@ def realizar_login(janela):
             status = verificar_senha(colaborador.get("senha"), senha)
             if status == 0:
                 frame_login.destroy()
-                janela.concluido.set(True)
+                contexto.janela.concluido.set(True)
                 perfil = get_colaborador(login)
                 return
         messagebox.showwarning("Login inválido.", "Credenciais inválidas.")
+        campo_login.focus()
 
 
 def sem_acesso():
@@ -38,21 +40,16 @@ def sem_acesso():
     )
 
 
-def encerrar(janela):
+def encerrar():
     if messagebox.askyesno(title="Sair?", message="Tem certeza que deseja sair?"):
-        janela.concluido.set(True)
-        janela.quit()
-        janela.after(50, janela.destroy)
+        contexto.janela.concluido.set(True)
+        contexto.janela.quit()
+        contexto.janela.after(50, contexto.janela.destroy)
 
 
-def limpar(janela):
+def limpar():
     for widget in frame_login.winfo_children():
         widget.destroy()
-
-
-def atalho_enter(event, janela):
-    if event.state in (40, 262184, 42, 262186) and event.keysym == "Return":
-        realizar_login(janela)
 
 
 def esqueci_senha():
@@ -80,69 +77,62 @@ Verifique a caixa de Spam.\nCaso tenha problemas, contate o responsável pela in
         )
 
 
-def reconstruir_login(janela):
-    global campo_login, campo_senha, concluido, perfil, frame_login
+def reconstruir_login():
+    global campo_login, campo_senha, concluido, perfil, frame_login, e
 
-    frame_login = tk.Frame(janela, pady=0)
+    frame_login = tk.Frame(contexto.janela, pady=0)
 
     frame_login.grid(padx=100)
 
     bemvindo = tk.Label(
         frame_login,
-        text="Bem vindo(a) ao Sistema Estudantil",
-        font=(FONTE, 14),
+        text="Bem vindo(a) ao EduSmart",
+        font=(GUI_FONT, 14),
     )
 
-    janela.concluido = tk.BooleanVar()
+    contexto.janela.concluido = tk.BooleanVar()
 
     etiqueta_login = tk.Label(
         frame_login,
         text="Login:",
-        font=(FONTE, 12, "bold"),
+        font=(GUI_FONT, 12, "bold"),
     )
-    login = tk.StringVar()
-    campo_login = tk.Entry(frame_login, textvariable=login, font=(FONTE, 12))
-    campo_login.bind("<KeyPress>", lambda event: atalho_enter(event, janela))
+    campo_login = ttk.Entry(frame_login, font=(GUI_FONT, 12))
+    campo_login.bind("<Return>", lambda event: realizar_login())
+    campo_login.focus()
 
-    senha = tk.StringVar()
-    campo_senha = tk.Entry(
+    campo_senha = ttk.Entry(
         frame_login,
-        textvariable=senha,
-        font=(FONTE, 12, ""),
+        font=(GUI_FONT, 12, ""),
         show="*",
     )
-    campo_senha.bind("<KeyPress>", lambda event: atalho_enter(event, janela))
+    campo_senha.bind("<Return>", lambda event: realizar_login())
 
-    etiqueta_senha = tk.Label(frame_login, text="Senha: ", font=(FONTE, 12, "bold"))
+    etiqueta_senha = tk.Label(frame_login, text="Senha: ", font=(GUI_FONT, 12, "bold"))
 
-    botao_login = tk.Button(
+    botao_login = ttk.Button(
         frame_login,
         text="Entrar",
-        font=(FONTE, 10, "bold"),
-        command=lambda: realizar_login(janela),
+        style="primary",
+        command=lambda: realizar_login(),
     )
-    botao_esqueci_senha = tk.Button(
+    botao_esqueci_senha = ttk.Button(
         frame_login,
         text="Esqueci minha senha",
-        font=(
-            FONTE,
-            8,
-        ),
         command=esqueci_senha,
-        border=0,
-        foreground="blue",
+        bootstyle="primary-link",
     )
-    botao_cadastrar = tk.Button(
+    botao_cadastrar = ttk.Button(
         frame_login,
         text="Não possuo acesso.",
-        font=(FONTE, 10),
+        style="primary-outline",
         command=sem_acesso,
     )
-    botao_sair = tk.Button(
+    botao_sair = ttk.Button(
         frame_login,
         text="Sair",
-        font=(FONTE, 10),
-        command=lambda: encerrar(janela),
+        style="primary-outline",
+        command=lambda: encerrar(),
     )
 
     frame_login.columnconfigure((0, 4), weight=1)
@@ -162,14 +152,14 @@ def reconstruir_login(janela):
     botao_cadastrar.grid(row=6, column=2)
     botao_sair.grid(row=6, column=3)
 
-    janela.protocol("WM_DELETE_WINDOW", lambda: encerrar(janela))
-    janela.wait_variable(janela.concluido)
+    contexto.janela.protocol("WM_DELETE_WINDOW", encerrar)
+    contexto.janela.wait_variable(contexto.janela.concluido)
 
     return perfil
 
 
-def tela_login(janela):
-    return reconstruir_login(janela)
+def tela_login():
+    return reconstruir_login()
 
 
 perfil = {None: None}

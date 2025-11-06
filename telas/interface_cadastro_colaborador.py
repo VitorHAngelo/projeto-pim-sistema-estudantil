@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import ttk
+import ttkbootstrap as ttk
 from tkinter import messagebox
 from dados import get_colaborador, add_colaborador
 from telas.utils_tk import limpar_widgets
+import contexto
 from seguranca import hashear_senha, gerar_senha_temp
 from config import GUI_FONT
 from telas.utils_tk import (
@@ -13,7 +14,9 @@ from telas.utils_tk import (
 )
 
 
-def cadastrar():
+def cadastrar(event=None):
+    # Limpa apenas a área de erros antes da validação
+    limpar_widgets(frame_erros)
     usuario = {}
     erros = []
     cpf = "".join([digit for digit in dados_usuario["cpf"].get() if digit.isdigit()])
@@ -30,15 +33,8 @@ def cadastrar():
     )
     if len(nascimento) < 8:
         erros.append("- Data de nascimento inválida.")
-    if (
-        not "@" in dados_usuario["email"].get()
-        or not "." in dados_usuario["email"].get()
-    ):
+    if not verificar_email(campo=dados_usuario["email"]):
         erros.append("- Email inválido.")
-    frame_erros = tk.Frame(frame_cadastro, width=100, height=100)
-    for i in range(6):
-        frame_erros.rowconfigure(i, minsize=5, weight=1)
-    frame_erros.grid(row=7, column=0)
     if erros:
         for i in range(len(erros)):
             tk.Label(
@@ -50,12 +46,13 @@ def cadastrar():
     # Cria dicionário com os dados recebidos da interface
     senha_crua = senha
     usuario[cpf] = {
-        "nome": dados_usuario["nome"].get(),
+        "nome": str(dados_usuario["nome"].get()).title(),
         "nascimento": nascimento,
-        "email": dados_usuario["email"].get(),
+        "email": str(dados_usuario["email"].get()).title(),
         "telefone": telefone,
         "cargo": dados_usuario["cargo"].get(),
         "senha": hashear_senha(senha),
+        "diario": {},
     }
     status = add_colaborador(usuario)
     if status[0] in (1, 2):  # Se código for 1 ou 2
@@ -82,18 +79,13 @@ def cancelar():
     pass
 
 
-def atalho_enter(event):
-    if event.state in (40, 42, 262184, 262186) and event.keysym == "Return":
-        cadastrar()
+def reconstruir_frame():
+    limpar_widgets()
 
-
-def reconstruir_frame(frame_conteudo):
-    limpar_widgets(frame_conteudo)
-
-    global frame_cadastro
+    global frame_cadastro, frame_erros
     global dados_usuario
 
-    frame_cadastro = tk.Frame(frame_conteudo)
+    frame_cadastro = tk.Frame(contexto.frame_conteudo)
 
     for i in range(1, 10):
         frame_cadastro.rowconfigure(i, minsize=20)
@@ -102,12 +94,17 @@ def reconstruir_frame(frame_conteudo):
     frame_cadastro.columnconfigure((1, 2, 3, 4, 5), pad=5, weight=0, minsize=10)
     frame_cadastro.grid(row=0, column=0, sticky="sew", pady=15)
 
+    frame_erros = tk.Frame(frame_cadastro, width=100, height=100)
+    for i in range(6):
+        frame_erros.rowconfigure(i, minsize=5, weight=1)
+    frame_erros.grid(row=7, column=0, sticky="nw", columnspan=2)
+
     # Nome
     label_nome = tk.Label(frame_cadastro, text="Nome: ", font=(GUI_FONT, 16, "bold"))
     campo_nome = tk.StringVar()
     entry_nome = tk.Entry(frame_cadastro, textvariable=campo_nome, font=(GUI_FONT, 16))
     dados_usuario["nome"] = campo_nome
-    entry_nome.bind("<KeyPress>", atalho_enter)
+    entry_nome.bind("<Return>", cadastrar)
     entry_nome.focus()
 
     # Data Nascimento
@@ -119,7 +116,7 @@ def reconstruir_frame(frame_conteudo):
         frame_cadastro, textvariable=campo_nascimento, font=(GUI_FONT, 16)
     )
     dados_usuario["nascimento"] = campo_nascimento
-    entry_nascimento.bind("<Return>", atalho_enter)
+    entry_nascimento.bind("<Return>", cadastrar)
     entry_nascimento.bind(
         "<KeyPress>",
         lambda event: verificar_data(event, campo_nascimento, entry_nascimento),
@@ -136,7 +133,7 @@ def reconstruir_frame(frame_conteudo):
     campo_cpf = tk.StringVar()
     entry_cpf = tk.Entry(frame_cadastro, textvariable=campo_cpf, font=(GUI_FONT, 16))
     dados_usuario["cpf"] = campo_cpf
-    entry_cpf.bind("<Return>", atalho_enter)
+    entry_cpf.bind("<Return>", cadastrar)
     entry_cpf.bind(
         "<KeyPress>", lambda event: formatar_cpf(event, campo_cpf, entry_cpf)
     )
@@ -148,9 +145,9 @@ def reconstruir_frame(frame_conteudo):
         frame_cadastro, textvariable=campo_email, font=(GUI_FONT, 16)
     )
     dados_usuario["email"] = campo_email
-    entry_email.bind("<Return>", atalho_enter)
+    entry_email.bind("<Return>", cadastrar)
     entry_email.bind(
-        "<KeyPress>", lambda event: verificar_email(event, campo_email, entry_email)
+        "<KeyPress>", lambda event: verificar_email(campo_email, event, entry_email)
     )
     label_validacao_email = tk.Label(
         frame_cadastro, text="Digite um email válido.", font=(GUI_FONT, 12, "bold")
@@ -165,7 +162,7 @@ def reconstruir_frame(frame_conteudo):
         frame_cadastro, textvariable=campo_telefone, font=(GUI_FONT, 16)
     )
     dados_usuario["telefone"] = campo_telefone
-    entry_telefone.bind("<Return>", atalho_enter)
+    entry_telefone.bind("<Return>", cadastrar)
     entry_telefone.bind(
         "<KeyPress>",
         lambda event, campo=campo_telefone: formatar_telefone(
@@ -182,24 +179,32 @@ def reconstruir_frame(frame_conteudo):
     botoes_radio = []
     for i in range(2):
         botoes_radio.append(
-            tk.Radiobutton(
+            ttk.Radiobutton(
                 frame_cadastro,
                 text=cargos[i],
                 variable=campo_cargo,
                 value=cargos[i],
-                font=(GUI_FONT, 16),
             )
         )
 
     # Botões
-    botao_salvar = tk.Button(
-        frame_cadastro, text="Salvar", font=(GUI_FONT, 14, "bold"), command=cadastrar
+    botao_salvar = ttk.Button(
+        frame_cadastro,
+        text="Salvar",
+        bootstyle="primary-outline",
+        command=cadastrar,
     )
-    botao_limpar = tk.Button(
-        frame_cadastro, text="Limpar", font=(GUI_FONT, 14), command=limpar
+    botao_limpar = ttk.Button(
+        frame_cadastro,
+        text="Limpar",
+        bootstyle="primary-outline",
+        command=limpar,
     )
-    botao_cancelar = tk.Button(
-        frame_cadastro, text="Cancelar", font=(GUI_FONT, 14), command=cancelar
+    botao_cancelar = ttk.Button(
+        frame_cadastro,
+        text="Cancelar",
+        bootstyle="primary-outline",
+        command=cancelar,
     )
 
     # Row 0
@@ -234,8 +239,8 @@ def reconstruir_frame(frame_conteudo):
 dados_usuario = {}
 
 
-def iniciar_cadastro(frame_conteudo):
-    return reconstruir_frame(frame_conteudo)
+def iniciar_cadastro():
+    return reconstruir_frame()
 
 
 if __name__ == "__main__":
