@@ -52,6 +52,7 @@ def atualizar_dados(event=None):
         "telefone": telefone,
         "cargo": dados_usuario["cargo"].get(),
         "senha": dados_usuario["senha"],
+        "diario": dados_usuario["diario"],
     }
     status = editar_colaborador(usuario)
     messagebox.showinfo("Cadastro", message=status, icon="info", parent=frame_edicao)
@@ -156,6 +157,9 @@ def reconstruir_frame(usuario_buscado):
         frame_edicao, values=["Professor", "Coordenador"], font=(GUI_FONT, 14)
     )
     dados_usuario["cargo"] = campo_cargo
+
+    # Diario
+    dados_usuario["diario"] = usuario_buscado["diario"]
 
     # Popular campos
     entry_nome.insert(0, usuario_buscado["nome"])

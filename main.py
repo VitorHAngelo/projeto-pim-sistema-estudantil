@@ -2,8 +2,10 @@ from dados import checar_json_existe
 from seguranca import checar_existencia_env
 import ttkbootstrap as ttk
 from config import FILES_PATH, GUI_FONT
+from tkinter import messagebox
 import tkinter as tk
 import locale
+import pathlib
 import contexto
 from telas import (
     tela_login,
@@ -20,6 +22,9 @@ from telas import (
     alt_tamanho_janela,
     criar_interface_atividades,
     criar_diario,
+    limpar_widgets,
+    criar_interface_frequencia,
+    criar_frame_chat,
 )
 
 
@@ -33,6 +38,8 @@ def criar_barra_admin():
         row=0, column=0, sticky="n", pady=8
     )
 
+    mensagem_eco(frame_perfil)
+
     menubutton_colaboradores = ttk.Menubutton(
         logo_frame, text="Colaboradores", style="Outline.TMenubutton"
     )
@@ -41,11 +48,11 @@ def criar_barra_admin():
     )
     menu_colaboradores.add_command(
         label="Novo colaborador",
-        command=lambda: iniciar_cadastro(),
+        command=iniciar_cadastro,
     )
     menu_colaboradores.add_command(
         label="Editar colaborador",
-        command=lambda: iniciar_edicao_colaborador(),
+        command=iniciar_edicao_colaborador,
     )
 
     menubutton_colaboradores["menu"] = menu_colaboradores
@@ -67,7 +74,7 @@ def criar_barra_admin():
     )
     menu.add_command(
         label="Alterar senha",
-        command=lambda: alterar_senha_admin(),
+        command=alterar_senha_admin,
     )
     menu.add_command(label="Sair", command=logoff)
 
@@ -80,18 +87,18 @@ def criar_barra_coordenador():
 
     # Alunos
     menubutton_alunos = ttk.Menubutton(
-        logo_frame, text="Alunos", style="Outline.TMenubutton"
+        logo_frame, text="Alunos", style="MenuButtons.Primary.TButton"
     )
     menu_alunos = ttk.Menu(
         menubutton_alunos,
     )
     menu_alunos.add_command(
         label="Novo Aluno",
-        command=lambda: iniciar_cadastro_aluno(),
+        command=iniciar_cadastro_aluno,
     )
     menu_alunos.add_command(
         label="Editar Aluno",
-        command=lambda: iniciar_edicao_aluno(),
+        command=iniciar_edicao_aluno,
     )
 
     menubutton_alunos["menu"] = menu_alunos
@@ -105,32 +112,43 @@ def criar_barra_coordenador():
 
     # Turmas
     menubutton_turmas = ttk.Menubutton(
-        logo_frame, text="Turmas", style="Outline.TMenubutton"
+        logo_frame, text="Turmas", style="MenuButtons.Primary.TButton"
     )
     menu_turmas = ttk.Menu(
         menubutton_turmas,
     )
     menu_turmas.add_command(
         label="Nova Turma",
-        command=lambda: iniciar_cadastro_turma(contexto.colaborador),
+        command=iniciar_cadastro_turma,
     )
     menu_turmas.add_command(
         label="Editar Turma",
-        command=lambda: iniciar_edicao_turma(),
+        command=iniciar_edicao_turma,
     )
 
     menubutton_turmas["menu"] = menu_turmas
     menubutton_turmas.grid(row=0, column=2, pady=3, padx=5, sticky="ne")
 
+    # IA
+
+    botao_ia = ttk.Button(
+        logo_frame,
+        text="I.A.",
+        command=criar_frame_chat,
+        style="MenuButtons.Primary.TButton",
+    )
+    botao_ia.grid(row=0, column=3, pady=3, padx=5, sticky="ne")
+
     ttk.Separator(
         logo_frame,
         orient=tk.VERTICAL,
         bootstyle="primary",
-    ).grid(row=0, column=3, padx=15, sticky="n", pady=2)
+    ).grid(row=0, column=4, padx=15, sticky="n", pady=2)
 
     # Profile
     frame_perfil = tk.Frame(logo_frame)
     frame_perfil.grid(row=0, column=6, sticky="ne")
+    mensagem_eco(frame_perfil)
     cargo = "Prof. " if contexto.colaborador["cargo"] == "Professor" else "Coord. "
     nome = cargo + " ".join(contexto.colaborador["nome"].split()[0:2])
     ttk.Label(frame_perfil, text=nome, font=(GUI_FONT, 16)).grid(
@@ -160,6 +178,7 @@ def criar_barra_professor():
 
     # Profile
     frame_perfil = tk.Frame(logo_frame)
+    mensagem_eco(frame_perfil)
     frame_perfil.grid(row=0, column=6, sticky="ne")
     cargo = "Prof. " if contexto.colaborador["cargo"] == "Professor" else "Coord. "
     nome = cargo + " ".join(contexto.colaborador["nome"].split()[0:2])
@@ -188,31 +207,148 @@ def criar_barra_professor():
     botao_diario = ttk.Button(
         logo_frame,
         text="Diário",
-        command=lambda: criar_diario(contexto.colaborador),
+        command=criar_diario,
+        style="MenuButtons.Primary.TButton",
+    )
+    botao_frequencia = ttk.Button(
+        logo_frame,
+        text="Frequência",
+        command=criar_interface_frequencia,
         style="MenuButtons.Primary.TButton",
     )
     botao_atividades = ttk.Button(
         logo_frame,
         text="Atividades",
-        command=lambda: criar_interface_atividades(contexto.colaborador),
+        command=criar_interface_atividades,
         style="MenuButtons.Primary.TButton",
     )
     botao_ia = ttk.Button(
         logo_frame,
         text="I.A.",
-        command=lambda: print("I.A."),
+        command=criar_frame_chat,
         style="MenuButtons.Primary.TButton",
     )
+
+    botao_diario.grid(row=0, column=1, pady=5, padx=5, sticky="n")
+    botao_frequencia.grid(row=0, column=2, pady=5, padx=5, sticky="n")
+    botao_atividades.grid(row=0, column=3, pady=5, padx=5, sticky="n")
+    botao_ia.grid(row=0, column=4, pady=5, padx=5, sticky="n")
 
     ttk.Separator(
         logo_frame,
         orient=tk.VERTICAL,
         bootstyle="primary",
-    ).grid(row=0, column=4, padx=15, sticky="n", pady=2)
+    ).grid(row=0, column=5, padx=15, sticky="n", pady=2)
 
-    botao_diario.grid(row=0, column=1, pady=5, padx=5, sticky="n")
-    botao_atividades.grid(row=0, column=2, pady=5, padx=5, sticky="n")
-    botao_ia.grid(row=0, column=3, pady=5, padx=5, sticky="n")
+
+def mostrar_mensagem_eco(num_mensagem=1):
+    popup = ttk.Toplevel()
+    popup.title("Sustentabilidade")
+    popup.geometry("880x480")
+    popup.update_idletasks()
+    largura = popup.winfo_width()
+    altura = popup.winfo_height()
+    x = popup.winfo_screenwidth() // 2 - largura // 2
+    y = popup.winfo_screenheight() // 2 - altura // 2
+    popup.geometry(f"+{x}+{y}")
+
+    frame_mensagem = ttk.Frame(master=popup)
+    frame_mensagem.grid(row=0, column=0)
+    popup.rowconfigure(0, weight=1)
+    popup.columnconfigure(1, weight=1)
+
+    def mudar_mensagem(num):
+        popup.destroy()
+        mostrar_mensagem_eco(num)
+
+    def mensagem_um():
+        mensagem = """    A educação ambiental é o processo de aprendizagem que visa entender
+e respeitar o meio ambiente, tendo uma conscientização sobre nossas atitudes e seu
+impacto sobre o planeta. Ela vai além das aulas de ciência ou de campanhas de reciclagem,
+ela também coopera para desenvolver uma mentalidade sustentável capaz de equilibrar o
+avanço tecnológico e o cuidado com o meio ambiente. 
+    A educação ambiental  é de extrema importância tendo em vista que ela pode
+transformar comportamentos e gerar mudanças reais na sociedade. Em nosso planeta,
+onde é marcado pelo alto índice de produção de lixo, degradação ambiental entre
+outros danos, é necessário repensar formas de minimizar esses altos índices.
+Dentro de nossa escola ou até mesmo fora, essa conscientização ganha mais relevância
+ainda pois os conhecimentos podem ser aplicados de maneira prática em nosso
+cotidiano, formando assim alunos com práticas sustentáveis. 
+"""
+        ttk.Label(
+            frame_mensagem,
+            text=mensagem,
+            font=(GUI_FONT, 14),
+            bootstyle="primary",
+            justify="center",
+        ).grid(row=1, column=1, columnspan=5)
+        ttk.Button(
+            frame_mensagem,
+            text=">",
+            bootstyle="primary-outline",
+            command=lambda: mudar_mensagem(2),
+        ).grid(row=2, column=5, sticky="e")
+
+    def mensagem_dois():
+        mensagem = """    A sustentabilidade não é somente uma teoria, mas um estilo
+de vida e boas práticas que se constroem por meio de atitudes diárias. Alguns hábitos
+que podemos colocar em prática em nosso cotidiano: 
+- Separar o lixo corretamente
+- Economizar água e energia elétrica
+- Reduzir o uso de plásticos e optar por materiais reutilizáveis
+- Utilizar transportes coletivos 
+- Participar de campanhas e projetos ambientais
+Esses hábitos por menores que parecem ser, podem impactar grandemente e positivamente
+no meio ambiente se forem colocados em prática de forma coletiva. A educação ambiental
+mostra que cada pessoa pode e deve contribuir para um planeta mais saudável e preservado.
+    Sendo assim, cuidar do meio ambiente é cuidar das próximas gerações!
+
+"O meio ambiente é o livro aberto da natureza, e cada um de nós escreve uma página.\""""
+        ttk.Label(
+            frame_mensagem,
+            text=mensagem,
+            font=(GUI_FONT, 14),
+            bootstyle="primary",
+            justify="left",
+        ).grid(row=1, column=1, columnspan=5)
+        ttk.Button(
+            frame_mensagem,
+            text="<",
+            bootstyle="primary-outline",
+            command=lambda: mudar_mensagem(1),
+        ).grid(row=2, column=1, sticky="w")
+
+    titulo = "Educação Ambiental: consciência, responsabilidade e ação.\n"
+    ttk.Label(
+        frame_mensagem,
+        text=titulo,
+        font=(GUI_FONT, 18, "bold"),
+        bootstyle="primary",
+        justify="center",
+    ).grid(row=0, column=1, columnspan=5)
+    big_leaf = tk.PhotoImage(master=frame_mensagem, file=FILES_PATH + "leaf_big.png")
+    imagem_leaf = ttk.Label(frame_mensagem, image=big_leaf, padding=40)
+    imagem_leaf.img = big_leaf
+    imagem_leaf.grid(row=0, column=0, sticky="ns", rowspan=3)
+    ttk.Button(
+        frame_mensagem,
+        text="Fechar",
+        bootstyle="primary-outline",
+        command=popup.destroy,
+    ).grid(row=3, column=3)
+    if num_mensagem == 1:
+        mensagem_um()
+    else:
+        mensagem_dois()
+
+
+def mensagem_eco(frame_perfil):
+    leaf = tk.PhotoImage(file=FILES_PATH + "leaf.png")
+    botao_leaf = ttk.Button(
+        frame_perfil, image=leaf, bootstyle="sucess-link", command=mostrar_mensagem_eco
+    )
+    botao_leaf.img = leaf
+    botao_leaf.grid(row=1, column=2, sticky="se", pady=(42, 0))
 
 
 def logoff():
@@ -280,7 +416,7 @@ def main():
     # Botões barra menu
     style.configure(
         "MenuButtons.Primary.TButton",
-        font=(GUI_FONT, 16),
+        font=(GUI_FONT, 16, "bold"),
         borderwidth=0,
         background="white",
         foreground="black",

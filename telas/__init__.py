@@ -7,7 +7,13 @@ from .alterar_senha_colaborador import alterar_senha_colaborador
 from .interface_cadastro_turma import iniciar_cadastro_turma
 from .interface_cadastro_aluno import iniciar_cadastro_aluno
 from .interface_edicao_aluno import iniciar_edicao_aluno
-from .interface_atividades_prof import criar_interface_atividades, criar_diario
+from .interface_atividades_prof import (
+    criar_interface_atividades,
+    criar_diario,
+    criar_interface_frequencia,
+)
+from .interface_inteligencia import criar_frame_chat
+from .utils_tk import limpar_widgets
 
 # utils_tk
 from .utils_tk import ui_login, ui_geral, encerrar, alt_tamanho_janela
@@ -25,9 +31,12 @@ __all__ = [
     "iniciar_edicao_aluno",
     "criar_interface_atividades",
     "criar_diario",
+    "criar_interface_frequencia",
+    "criar_frame_chat",
     # utilitários
     "ui_login",
     "ui_geral",
     "encerrar",
     "alt_tamanho_janela",
+    "limpar_widgets",
 ]

@@ -14,7 +14,8 @@ def checar_existencia_env() -> None:
         with open(FILES_PATH + ".env", "x") as file:
             file.write(
                 f"ADMINISTRADOR=UNIP25ADS\nSECRET_KEY={string_key}\n\
-EMAIL_PASSWORD='oucs ptcj esun ruoc'\n"
+EMAIL_PASSWORD='oucs ptcj esun ruoc'\n\
+GEMINI_API_KEY=AIzaSyAzaRCiuTx8hSQpnkhnDhrCjNncrq5wxcA"
             )
 
 

@@ -132,10 +132,8 @@ def aviso_exclusao(nome, turma):
         excluir_atividade(nome, turma)
 
 
-def criar_interface_atividades(colaborador):
-    global professor, frame_pai, frame_listagem, frame_editar_atividades, campo_turma
-    frame_pai = contexto.frame_conteudo
-    professor = colaborador
+def criar_interface_atividades():
+    global frame_listagem, frame_editar_atividades, campo_turma
 
     limpar_widgets()
     frame_botoes = tk.Frame(contexto.frame_conteudo, height=50, width=300)
@@ -150,12 +148,6 @@ def criar_interface_atividades(colaborador):
         command=lambda: criar_atividade(frame_editar_atividades, razao="add"),
         bootstyle="primary-link",
     )
-    # remove = tk.PhotoImage(file=FILES_PATH + "removes.png")
-    # remove_label = tk.Label(frame_botoes, image=remove)
-    # remove_label.image = remove
-    # botao_remove = ttk.Button(
-    #     frame_botoes, image=remove,  command=lambda: print("Remove"), borderwidth=0, bootstyle="primary-outline",
-    # )
 
     largura_tela = contexto.frame_conteudo.winfo_toplevel().winfo_screenwidth()
     frame_lista_atividades = tk.Frame(
@@ -193,8 +185,15 @@ def criar_interface_atividades(colaborador):
     # botao_remove.grid(row=1, column=1, padx=5, pady=5)
 
 
-def salvar_atividade(event=None):
-    limpar_widgets()
+def salvar_atividade(atividade, event=None):
+    # Clear any previous error messages but do NOT destroy the input widgets yet
+    # (calling limpar_widgets() without args removes widgets referenced below and
+    # causes _tkinter.TclError when we try to .get() from them).
+    try:
+        limpar_widgets(frame_erros)
+    except Exception:
+        # frame_erros may not exist yet; ignore in that case
+        pass
     erros = []
     # NOME ATIVIDADE
     lista_atividades = get_atividades(atividade["turma"].get())
@@ -240,9 +239,20 @@ def salvar_atividade(event=None):
     messagebox.showinfo(
         "Cadastro", message="Atividade criada", icon="info", parent=frame_pai
     )
-    campo_turma.set("")
-    limpar_widgets()
-    limpar_widgets()
+    # Clear the turma selector shown in the main listing (if it exists)
+    try:
+        campo_turma.set("")
+    except Exception:
+        pass
+    # Refresh / clear only the edit and listing frames
+    try:
+        limpar_widgets(frame_editar_atividades)
+    except Exception:
+        pass
+    try:
+        limpar_widgets(frame_listagem)
+    except Exception:
+        pass
 
 
 def formatar_nota(event):
@@ -362,28 +372,32 @@ def interface_notas(nome_atividade):
         frame_editar_atividades,
         text="Salvar",
         bootstyle="primary",
-        command=lambda: salvar_notas(dicionario_notas, nome_atividade),  # ✔️
+        command=lambda: salvar_notas(dicionario_notas),  # ✔️
     )
     botao_cancelar.grid(row=3, column=1, pady=15, padx=5)
     botao_salvar.grid(row=3, column=2, pady=15)
 
 
-def salvar_notas(dicionario_notas: dict, nome_atividade: str):
+def salvar_notas(dicionario_notas: dict):
     dicionario_preenchido = {}
     for ra, nota in dicionario_notas.items():
         if not nota.get():
             continue
         try:
-            dicionario_preenchido[ra] = float(nota.get())
+            nota_float = float(nota.get())
+            if nota_float > atividade["nota"] or nota_float < 0:
+                messagebox.showerror("Nota inválida", "Nota fora dos limites impostos.")
+                return
+            dicionario_preenchido[ra] = nota_float
         except ValueError:
             messagebox.showerror("Nota inválida", "Favor, insira somente números.")
             return
     for ra, nota in dicionario_preenchido.items():
         aluno = get_aluno_by_ra(ra)
-        aluno["notas"][nome_atividade] = nota
+        aluno["notas"][atividade["nome"]] = nota
         editar_aluno(aluno)
     messagebox.showinfo(
-        "Sucesso", f'Notas da atividade "{nome_atividade}" atualizadas.'
+        "Sucesso", f'Notas da atividade "{atividade['nome']}" atualizadas.'
     )
 
 
@@ -449,8 +463,8 @@ def limpar(frame):
 
 
 def criar_atividade(frame, razao=None):
-    global atividade, frame_erros
-    atividade = {}
+    global nova_atividade, frame_erros
+    nova_atividade = {}
 
     frame_erros = tk.Frame(frame, width=100, height=100)
     for i in range(6):
@@ -462,8 +476,8 @@ def criar_atividade(frame, razao=None):
     label_nome = tk.Label(frame, text="Nome: ", font=(GUI_FONT, 16, "bold"))
     campo_nome = tk.StringVar()
     entry_nome = tk.Entry(frame, textvariable=campo_nome, font=(GUI_FONT, 16))
-    atividade["nome"] = campo_nome
-    entry_nome.bind("<Return>", salvar_atividade)
+    nova_atividade["nome"] = campo_nome
+    entry_nome.bind("<Return>", lambda event: salvar_atividade(nova_atividade))
     entry_nome.focus()
 
     # data_inicio
@@ -474,7 +488,7 @@ def criar_atividade(frame, razao=None):
         bootstyle="primary",
         startdate=datetime.today(),
     )
-    atividade["inicio"] = calendario_inicio
+    nova_atividade["inicio"] = calendario_inicio
 
     # data_fim
     label_data_fim = tk.Label(frame, text="Fim: ", font=(GUI_FONT, 16, "bold"))
@@ -484,37 +498,39 @@ def criar_atividade(frame, razao=None):
         bootstyle="primary",
         startdate=None,
     )
-    atividade["fim"] = calendario_fim
+    nova_atividade["fim"] = calendario_fim
 
     # turma
-    atividade["turmas"] = get_turmas()
+    nova_atividade["turmas"] = get_turmas()
     label_turma = tk.Label(frame, text="Turma: ", font=(GUI_FONT, 16, "bold"))
-    campo_turma = ttk.Combobox(frame, values=atividade["turmas"], font=(GUI_FONT, 14))
-    atividade["turma"] = campo_turma
+    campo_turma = ttk.Combobox(
+        frame, values=nova_atividade["turmas"], font=(GUI_FONT, 14)
+    )
+    nova_atividade["turma"] = campo_turma
 
     # nota
     label_nota = tk.Label(frame, text="Nota: ", font=(GUI_FONT, 16, "bold"))
     campo_nota = tk.DoubleVar()
     entry_nota = tk.Entry(frame, textvariable=campo_nota, font=(GUI_FONT, 16))
     campo_nota.set(10)
-    atividade["nota"] = campo_nota
-    entry_nota.bind("<Return>", salvar_atividade)
+    nova_atividade["nota"] = campo_nota
+    entry_nota.bind("<Return>", lambda event: salvar_atividade(nova_atividade))
 
     # descricao
     label_descricao = tk.Label(frame, text="Descrição: ", font=(GUI_FONT, 16, "bold"))
     entry_descricao = tk.Text(frame, width=42, height=6, font=(GUI_FONT, 12))
     scrollbar = tk.Scrollbar(frame, command=entry_descricao.yview)
-    atividade["descricao"] = entry_descricao
+    nova_atividade["descricao"] = entry_descricao
     entry_descricao.config(yscrollcommand=scrollbar.set)
 
     # docente
-    atividade["professor"] = professor["cpf"]
+    nova_atividade["professor"] = contexto.colaborador["cpf"]
 
     botao_salvar = ttk.Button(
         frame,
         text="Salvar",
         bootstyle="primary",
-        command=salvar_atividade,
+        command=lambda: salvar_atividade(nova_atividade),
     )
     botao_limpar = ttk.Button(
         frame,
@@ -551,8 +567,8 @@ def criar_atividade(frame, razao=None):
 
 
 def editar_atividade(nome_atividade, turma):
-    global atividade, frame_erros
-    atividade = {}
+    global atividade_edicao, frame_erros
+    atividade_edicao = {}
 
     for item in get_atividades(turma):
         if item["nome"] == nome_atividade:
@@ -576,8 +592,8 @@ def editar_atividade(nome_atividade, turma):
     entry_nome = tk.Entry(
         frame_editar_atividades, textvariable=campo_nome, font=(GUI_FONT, 16)
     )
-    atividade["nome"] = campo_nome
-    entry_nome.bind("<Return>", salvar_atividade)
+    atividade_edicao["nome"] = campo_nome
+    entry_nome.bind("<Return>", lambda event: salvar_atividade(atividade_edicao))
     entry_nome.focus()
 
     # data_inicio
@@ -589,7 +605,7 @@ def editar_atividade(nome_atividade, turma):
         dateformat="%d/%m/%Y",
         bootstyle="primary",
     )
-    atividade["inicio"] = calendario_inicio
+    atividade_edicao["inicio"] = calendario_inicio
 
     # data_fim
     label_data_fim = tk.Label(
@@ -600,10 +616,10 @@ def editar_atividade(nome_atividade, turma):
         dateformat="%d/%m/%Y",
         bootstyle="primary",
     )
-    atividade["fim"] = calendario_fim
+    atividade_edicao["fim"] = calendario_fim
 
     # turma
-    atividade["turmas"] = get_turmas()
+    atividade_edicao["turmas"] = get_turmas()
     label_turma = tk.Label(
         frame_editar_atividades, text="Turma: ", font=(GUI_FONT, 16, "bold")
     )
@@ -611,7 +627,7 @@ def editar_atividade(nome_atividade, turma):
     entry_turma = ttk.Entry(
         frame_editar_atividades, textvariable=campo_turma, font=(GUI_FONT, 14)
     )
-    atividade["turma"] = campo_turma
+    atividade_edicao["turma"] = campo_turma
 
     # nota
     label_nota = tk.Label(
@@ -621,8 +637,8 @@ def editar_atividade(nome_atividade, turma):
     entry_nota = tk.Entry(
         frame_editar_atividades, textvariable=campo_nota, font=(GUI_FONT, 16)
     )
-    atividade["nota"] = campo_nota
-    entry_nota.bind("<Return>", salvar_atividade)
+    atividade_edicao["nota"] = campo_nota
+    entry_nota.bind("<Return>", lambda event: salvar_atividade(atividade_edicao))
 
     # descricao
     label_descricao = tk.Label(
@@ -635,11 +651,11 @@ def editar_atividade(nome_atividade, turma):
         frame_editar_atividades,
         command=entry_descricao.yview,
     )
-    atividade["descricao"] = entry_descricao
+    atividade_edicao["descricao"] = entry_descricao
     entry_descricao.config(yscrollcommand=scrollbar.set)
 
     # docente
-    atividade["professor"] = professor["cpf"]
+    atividade_edicao["professor"] = contexto.colaborador["cpf"]
 
     # Popular campos
     entry_nome.insert(0, atividade_salva["nome"])
@@ -657,7 +673,7 @@ def editar_atividade(nome_atividade, turma):
         frame_editar_atividades,
         text="Salvar",
         bootstyle="primary",
-        command=lambda: salvar_edicao(atividade, nome_antigo),
+        command=lambda: salvar_edicao(atividade_edicao, nome_antigo),
     )
     botao_limpar = ttk.Button(
         frame_editar_atividades,
@@ -693,7 +709,7 @@ def editar_atividade(nome_atividade, turma):
     botao_salvar.grid(row=9, column=5, pady=15, padx=5)
 
 
-def mudar_mes(mes: int, ano: int, operacao: str, colaborador):
+def mudar_mes(mes: int, ano: int, operacao: str):
     if operacao == ">":
         mes += 1
     else:
@@ -704,17 +720,180 @@ def mudar_mes(mes: int, ano: int, operacao: str, colaborador):
     elif mes < 1:
         ano -= 1
         mes = 12
-    criar_diario(colaborador, mes, ano)
+    criar_diario(mes, ano)
+
+
+def criar_edicao_frequencia(data: datetime, turma):
+    # Ensure the edit frame exists and is a valid widget. It may have been
+    # destroyed by previous calls to limpar_widgets(contexto.frame_conteudo).
+    global frame_editar_frequencia
+    try:
+        exists = frame_editar_frequencia.winfo_exists()
+    except Exception:
+        exists = False
+
+    if not exists:
+        # Recreate and grid the frame in the same place used by
+        # criar_interface_frequencia so the UI remains consistent.
+        frame_editar_frequencia = ttk.Frame(contexto.frame_conteudo)
+        frame_editar_frequencia.grid(row=0, column=1, rowspan=10)
+
+    limpar_widgets(frame_editar_frequencia)
+    frame_editar_frequencia.columnconfigure(0, weight=1)
+    ttk.Label(
+        frame_editar_frequencia,
+        text=f"Frequência | {turma} | {data.strftime('%d/%m/%Y')}",
+        font=(GUI_FONT, 15, "bold"),
+    ).grid(row=0, column=0, pady=20, columnspan=2)
+
+    def configurar_scroll(event):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    canvas = ttk.Canvas(frame_editar_frequencia, width=400, height=440)
+    frame_editar_frequencia.grid_rowconfigure(2, weight=1)
+    frame_editar_frequencia.grid_columnconfigure(0, weight=1)
+    frame_alunos = ttk.Frame(canvas, relief="sunken", height=150)
+    frame_alunos.grid_columnconfigure(0, minsize=70, weight=0)
+    frame_alunos.grid_columnconfigure(1, minsize=75, weight=0)
+    frame_alunos.grid_columnconfigure(2, minsize=4, weight=0)
+    canvas.grid(row=2, column=0, columnspan=3, sticky="nsew")
+    window = canvas.create_window((0, 0), window=frame_alunos, anchor="nw")
+
+    scrollbar = ttk.Scrollbar(
+        frame_editar_frequencia, orient="vertical", command=canvas.yview
+    )
+    scrollbar.grid(row=2, column=3, sticky="nsw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    frame_alunos.bind("<Configure>", configurar_scroll)
+
+    def configurar_canvas(event):
+        try:
+            canvas.itemconfig(window, width=event.width)
+        except Exception:
+            pass
+
+    def _on_mousewheel(event):
+        canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+
+    canvas.bind_all("<MouseWheel>", _on_mousewheel)
+    canvas.bind("<Configure>", configurar_canvas)
+
+    alunos = get_alunos_turma(turma)
+
+    ttk.Label(frame_alunos, text="RA", font=(GUI_FONT, 14, "bold")).grid(
+        row=1, column=0, padx=5, pady=8
+    )
+    ttk.Label(frame_alunos, text="Nome", font=(GUI_FONT, 14, "bold")).grid(
+        row=1, column=1, padx=(5, 20), pady=8
+    )
+    ttk.Label(frame_alunos, text="Presença", font=(GUI_FONT, 14, "bold")).grid(
+        row=1, column=2, padx=5, pady=8
+    )
+
+    linha = 2
+    dicionario_presenca = {}
+    dados_turma = get_turma(turma)
+    for ra, informacoes in alunos.items():
+        # RA
+        tk.Label(frame_alunos, text=ra, font=(GUI_FONT, 14)).grid(
+            row=linha, column=0, pady=6
+        )
+        # Nome
+        nome = informacoes["nome"]
+        tk.Label(frame_alunos, text=nome, font=(GUI_FONT, 14)).grid(
+            row=linha, column=1, pady=6
+        )
+        # Nota
+        campo_presenca = tk.BooleanVar()
+        toggle_presenca = ttk.Checkbutton(
+            frame_alunos, bootstyle="primary-round-toggle", variable=campo_presenca
+        )
+        toggle_presenca.grid(row=linha, column=2, pady=3, padx=(5, 0))
+
+        dados_chave = data.strftime("%d%m%Y")
+        presente = dados_turma["frequencia"].get(dados_chave, {}).get(ra, False)
+
+        campo_presenca.set(1 if presente else 0)
+        dicionario_presenca[ra] = campo_presenca
+
+        linha += 1
+
+    def salvar_frequencia():
+        # Get current turma data
+        dados_turma = get_turma(turma)
+        if not dados_turma:
+            messagebox.showerror(
+                "Erro",
+                "Não foi possível encontrar os dados da turma para salvar frequência.",
+            )
+            return
+
+        # Initialize frequency structure if it doesn't exist
+        if "frequencia" not in dados_turma:
+            dados_turma["frequencia"] = {}
+
+        # Use date as key in ddmmyyyy format
+        chave_data = data.strftime("%d%m%Y")
+        if chave_data not in dados_turma["frequencia"]:
+            dados_turma["frequencia"][chave_data] = {}
+
+        # Update each student's attendance
+        for ra, var in dicionario_presenca.items():
+            dados_turma["frequencia"][chave_data][ra] = bool(var.get())
+
+        # Save updated turma
+        nome = dados_turma.pop("nome")  # editar_turma expects {nome: dados}
+        if editar_turma({nome: dados_turma}):
+            messagebox.showinfo(
+                "Sucesso",
+                "Frequência salva com sucesso!",
+            )
+            limpar_widgets(frame_editar_frequencia)
+        else:
+            messagebox.showerror(
+                "Erro",
+                "Erro ao salvar frequência. Tente novamente.",
+            )
+
+    botao_cancelar = ttk.Button(
+        frame_editar_frequencia,
+        text="Cancelar",
+        bootstyle="primary-outline",
+        command=lambda: limpar_widgets(frame_editar_frequencia),
+    )
+    botao_salvar = ttk.Button(
+        frame_editar_frequencia,
+        text="Salvar",
+        bootstyle="primary",
+        command=salvar_frequencia,  # ✔️
+    )
+    botao_cancelar.grid(row=3, column=1, pady=15, padx=5)
+    botao_salvar.grid(row=3, column=2, pady=15)
+
+
+def mudar_mes_frequencia(frame_calendario, mes: int, ano: int, operacao: str):
+    # frame_calendario must be forwarded so gerar_calendario_frequencia
+    # receives the correct widget (was passing ints previously)
+    if operacao == ">":
+        mes += 1
+    else:
+        mes -= 1
+    if mes > 12:
+        ano += 1
+        mes = mes % 12
+    elif mes < 1:
+        ano -= 1
+        mes = 12
+    gerar_calendario_frequencia(frame_calendario, mes, ano)
 
 
 def criar_diario(
-    colaborador,
     mes_escolhido=datetime.now().month,
     ano_escolhido=datetime.now().year,
 ):
-    global frame_pai, professor, frame_anotacoes
+    global frame_pai, frame_anotacoes
     frame_pai = contexto.frame_conteudo
-    professor = colaborador
     limpar_widgets()
     frame_barra_diario = ttk.Frame(contexto.frame_conteudo)
     frame_barra_diario.grid(row=0, column=0, padx=10, pady=10)
@@ -723,7 +902,7 @@ def criar_diario(
         frame_barra_diario,
         text="<<",
         style="MenuButtons.Primary.TButton",
-        command=lambda: mudar_mes(mes_escolhido, ano_escolhido, "<", colaborador),
+        command=lambda: mudar_mes(mes_escolhido, ano_escolhido, "<"),
     )
     data = datetime(ano_escolhido, mes_escolhido, 1)
     label_mes_ano = ttk.Label(
@@ -737,7 +916,7 @@ def criar_diario(
         frame_barra_diario,
         text=">>",
         style="MenuButtons.Primary.TButton",
-        command=lambda: mudar_mes(mes_escolhido, ano_escolhido, ">", colaborador),
+        command=lambda: mudar_mes(mes_escolhido, ano_escolhido, ">"),
     )
     botao_mes_anterior.grid(row=0, column=0, padx=5)
     # frame_barra_diario.columnconfigure(1, weight=1)
@@ -772,18 +951,118 @@ def criar_diario(
         if coluna > 6:
             coluna = coluna % 6
             coluna = coluna - 1
-        data_impressa = f"{dia}{mes_escolhido}{ano_escolhido}"
+        data_impressa = f"{dia:02d}{mes_escolhido:02d}{ano_escolhido}"
         ttk.Button(
             frame_diario,
             text=dia,
             bootstyle="primary-outline",
             command=lambda data=data_impressa: editar_anotacoes(
-                frame_anotacoes, datetime.strptime(data, "%d%m%Y"), professor
+                frame_anotacoes, datetime.strptime(data, "%d%m%Y"), contexto.colaborador
             ),
         ).grid(row=linha, column=coluna, ipady=6, padx=2, pady=2, sticky=tk.NSEW)
         if coluna == 6:
             linha += 1
         coluna += 1
+
+
+def gerar_calendario_frequencia(
+    mes_escolhido=datetime.now().month,
+    ano_escolhido=datetime.now().year,
+):
+    limpar_widgets(frame_calendario)
+    botao_mes_anterior = ttk.Button(
+        frame_calendario,
+        text="<<",
+        style="MenuButtons.Primary.TButton",
+        command=lambda: mudar_mes_frequencia(
+            frame_calendario, mes_escolhido, ano_escolhido, "<"
+        ),
+    )
+    data = datetime(ano_escolhido, mes_escolhido, 1)
+    label_mes_ano = ttk.Label(
+        frame_calendario,
+        text=f"{data.strftime('%B').capitalize()} de {data.strftime('%Y')}",
+        font=(GUI_FONT, 16, "bold"),
+        width=16,
+        anchor=tk.CENTER,
+    )
+    botao_mes_seguinte = ttk.Button(
+        frame_calendario,
+        text=">>",
+        style="MenuButtons.Primary.TButton",
+        command=lambda: mudar_mes_frequencia(
+            frame_calendario, mes_escolhido, ano_escolhido, ">"
+        ),
+    )
+    botao_mes_anterior.grid(row=0, column=0, padx=5)
+    label_mes_ano.grid(row=0, column=1, padx=5, sticky=tk.NSEW, columnspan=3)
+    botao_mes_seguinte.grid(row=0, column=4, padx=5)
+    # Gerar cabeçalho calendário
+    coluna = 0
+    for letra_dia in "DSTQQSS":
+        label_mes_ano = ttk.Label(
+            frame_calendario,
+            text=letra_dia,
+            font=(GUI_FONT, 14, "bold"),
+            width=8,
+            anchor=tk.CENTER,
+        ).grid(row=1, column=coluna, sticky=tk.NSEW)
+        coluna += 1
+    dia_semana, qtd_dias = calendar.monthrange(ano_escolhido, mes_escolhido)
+    dia_semana += 1
+
+    linha = 2
+    coluna = dia_semana
+    for dia in range(1, qtd_dias + 1):
+        if coluna > 6:
+            coluna = coluna % 6
+            coluna = coluna - 1
+        data_impressa = f"{dia:02d}{mes_escolhido:02d}{ano_escolhido}"
+        ttk.Button(
+            frame_calendario,
+            text=dia,
+            bootstyle="primary-outline",
+            command=lambda data=data_impressa: criar_edicao_frequencia(
+                datetime.strptime(data, "%d%m%Y"), campo_turma.get()
+            ),
+        ).grid(row=linha, column=coluna, ipady=6, padx=2, pady=2, sticky=tk.NSEW)
+        if coluna == 6:
+            linha += 1
+        coluna += 1
+
+
+def criar_interface_frequencia():
+    global frame_editar_frequencia, frame_calendario, campo_turma
+    limpar_widgets(contexto.frame_conteudo)
+    frame_frequencia = ttk.Frame(contexto.frame_conteudo)
+    frame_frequencia.grid(row=0, column=0)
+    frame_escolha_turma = ttk.Frame(frame_frequencia)
+    frame_escolha_turma.grid(row=0, column=0, padx=10, pady=10)
+    frame_calendario = ttk.Frame(frame_frequencia)
+    frame_calendario.grid(row=1, column=0, padx=10, pady=10)
+    frame_editar_frequencia = ttk.Frame(contexto.frame_conteudo)
+    frame_editar_frequencia.grid(row=0, column=1, rowspan=10)
+
+    titulo_label = tk.Label(
+        frame_escolha_turma, text="Selecione uma turma:", font=(GUI_FONT, 14, "bold")
+    )
+
+    turmas = get_turmas()
+    campo_turma = ttk.Combobox(frame_escolha_turma, values=turmas, font=(GUI_FONT, 14))
+    campo_turma.bind(
+        "<<ComboboxSelected>>",
+        lambda event: gerar_calendario_frequencia(),
+    )
+    titulo_label.grid(row=0, column=0, sticky="w")
+    campo_turma.grid(row=0, column=1, pady=(8, 15), padx=5, sticky="w")
+
+    frame_diario = ttk.Frame(frame_calendario)
+    frame_diario.grid(row=1, column=0, padx=10, pady=5, columnspan=10)
+    # frame_diario.rowconfigure(1, weight=1)
+
+    frame_anotacoes = ttk.Frame(frame_diario, relief="sunken", padding=10)
+    frame_anotacoes.grid(row=0, column=9, padx=30, sticky="nwes", rowspan=30)
+    frame_anotacoes.rowconfigure(10, weight=1)
 
 
 def editar_anotacoes(frame_anotacoes, data: datetime, professor):
@@ -856,6 +1135,8 @@ def editar_anotacoes(frame_anotacoes, data: datetime, professor):
         entry_desc.insert("1.0", desc)
 
     # Listar Anotações
+
+    print(get_colaborador(professor["cpf"]))
     diario_salvo = get_colaborador(professor["cpf"])["diario"]
     anotacoes_salvas = diario_salvo.get(data.strftime("%d%m%Y"), {})
     listbox = tk.Listbox(frame_anotacoes)
@@ -894,7 +1175,7 @@ def excluir_anotacao(professor):
     data = anotacao["data"].strftime("%d%m%Y")
     titulo = anotacao["titulo"].get()
     diario = professor["diario"].get(data, {})
-    if diario.get(titulo, None):
+    if diario.get(titulo, False):
         if messagebox.askyesno(
             "Apagar anotação?", f'Deseja realmente apagar a anotação "{titulo}"?'
         ):

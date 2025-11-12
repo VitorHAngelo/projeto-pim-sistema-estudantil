@@ -73,6 +73,7 @@ def cadastrar(event=None):
 def limpar():
     for widget in frame_cadastro.winfo_children():
         widget.destroy()
+    reconstruir_frame()
 
 
 def cancelar():

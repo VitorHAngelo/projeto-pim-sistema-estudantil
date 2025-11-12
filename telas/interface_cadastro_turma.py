@@ -32,6 +32,7 @@ def cadastrar():
         "criador": dados_turma["criador"],
         "alunos": [],
         "atividades": [],
+        "frequencia": {},
     }
     status = add_turma(turma)
     if status[0] in (1, 2):  # Se código for 1 ou 2
@@ -44,18 +45,19 @@ def cadastrar():
 def limpar():
     for widget in frame_cadastro_turma.winfo_children():
         widget.destroy()
+    reconstruir_frame()
 
 
 def cancelar():
     pass
 
 
-def reconstruir_frame(nome_colaborador):
+def reconstruir_frame():
     limpar_widgets()
 
     global frame_cadastro_turma
     global dados_turma
-    dados_turma["criador"] = nome_colaborador
+    dados_turma["criador"] = contexto.colaborador["cpf"]
 
     frame_cadastro_turma = tk.Frame(contexto.frame_conteudo)
 
@@ -141,8 +143,8 @@ def reconstruir_frame(nome_colaborador):
 dados_turma = {}
 
 
-def iniciar_cadastro_turma(nome_colaborador):
-    return reconstruir_frame(nome_colaborador)
+def iniciar_cadastro_turma():
+    return reconstruir_frame()
 
 
 if __name__ == "__main__":

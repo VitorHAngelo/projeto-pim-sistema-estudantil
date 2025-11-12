@@ -16,6 +16,7 @@ def atualizar_dados():
         "curso": dados_turma["curso"].get(),
         "periodo": dados_turma["periodo"].get(),
         "criador": dados_turma["criador"],
+        "frequencia": dados_turma["frequencia"],
     }
     status = editar_turma(turma)
     # Mostra a mensagem antes de limpar o frame para não usar um parent destruído
@@ -74,6 +75,9 @@ def reconstruir_frame(turma_buscada):
 
     # Criador
     dados_turma["criador"] = turma_buscada["criador"]
+
+    # Frequência
+    dados_turma["frequencia"] = turma_buscada["frequencia"]
 
     # Popular campos
     entry_nome_curso.insert(0, turma_buscada["curso"])
