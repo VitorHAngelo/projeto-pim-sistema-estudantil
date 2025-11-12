@@ -2,10 +2,8 @@ from dados import checar_json_existe
 from seguranca import checar_existencia_env
 import ttkbootstrap as ttk
 from config import FILES_PATH, GUI_FONT
-from tkinter import messagebox
 import tkinter as tk
 import locale
-import pathlib
 import contexto
 from telas import (
     tela_login,
@@ -22,13 +20,23 @@ from telas import (
     alt_tamanho_janela,
     criar_interface_atividades,
     criar_diario,
-    limpar_widgets,
     criar_interface_frequencia,
     criar_frame_chat,
 )
 
 
 def criar_barra_admin():
+    """Cria a barra de ferramentas para o usuário Admin.
+
+    Ajusta o tamanho da janela, monta o menu de colaboradores, o menu de perfil
+    (com opções para alterar a senha e sair) e exibe o nome do colaborador
+    atual. Também adiciona o botão/ícone de perfil e o separador visual.
+
+    Efeitos colaterais:
+    - Modifica a interface global (`logo_frame`, widgets dentro dele).
+    - Utiliza e atualiza `contexto.colaborador`.
+    - Chama `mensagem_eco` para adicionar o botão de sustentabilidade.
+    """
     alt_tamanho_janela(1350, 800)
 
     frame_perfil = tk.Frame(logo_frame)
@@ -83,6 +91,16 @@ def criar_barra_admin():
 
 
 def criar_barra_coordenador():
+    """Cria a barra de ferramentas para o usuário Coordenador.
+
+    Define botões e menus relevantes para coordenadores (Alunos, Turmas e I.A.),
+    além de exibir o perfil do colaborador atual. Ajusta também o tamanho da
+    janela para a resolução adequada.
+
+    Efeitos colaterais:
+    - Modifica a interface global (`logo_frame`).
+    - Usa `contexto.colaborador` para montar o texto do perfil.
+    """
     alt_tamanho_janela(1350, 800)
 
     # Alunos
@@ -174,6 +192,16 @@ def criar_barra_coordenador():
 
 # Professor
 def criar_barra_professor():
+    """Cria a barra de ferramentas para o usuário Professor.
+
+    Monta o perfil, botões de acesso rápido (Diário, Frequência, Atividades, I.A.)
+    e o menu de perfil com opção para alterar senha e sair. Ajusta o tamanho da
+    janela quando necessário.
+
+    Efeitos colaterais:
+    - Modifica `logo_frame` e adiciona widgets ao topo da janela.
+    - Usa `contexto.colaborador` para decidir o rótulo do usuário.
+    """
     alt_tamanho_janela(1350, 800)
 
     # Profile
@@ -242,6 +270,14 @@ def criar_barra_professor():
 
 
 def mostrar_mensagem_eco(num_mensagem=1):
+    """Exibe um popup com mensagem(s) sobre sustentabilidade.
+
+    Parâmetros:
+    - num_mensagem (int): se 1 exibe a primeira mensagem, caso contrário a segunda.
+
+    O popup é centralizado na tela e contém botões para navegar entre as
+    mensagens e fechar a janela.
+    """
     popup = ttk.Toplevel()
     popup.title("Sustentabilidade")
     popup.geometry("880x480")
@@ -258,10 +294,19 @@ def mostrar_mensagem_eco(num_mensagem=1):
     popup.columnconfigure(1, weight=1)
 
     def mudar_mensagem(num):
+        """Fecha o popup atual e reabre mostrando a mensagem indicada.
+
+        Este helper é usado pelos botões de navegação dentro do popup.
+        """
         popup.destroy()
         mostrar_mensagem_eco(num)
 
     def mensagem_um():
+        """Popula o popup com a primeira mensagem sobre educação ambiental.
+
+        Essa função cria os widgets (label e botão) para a primeira tela de
+        conteúdo do popup.
+        """
         mensagem = """    A educação ambiental é o processo de aprendizagem que visa entender
 e respeitar o meio ambiente, tendo uma conscientização sobre nossas atitudes e seu
 impacto sobre o planeta. Ela vai além das aulas de ciência ou de campanhas de reciclagem,
@@ -290,6 +335,11 @@ cotidiano, formando assim alunos com práticas sustentáveis.
         ).grid(row=2, column=5, sticky="e")
 
     def mensagem_dois():
+        """Popula o popup com a segunda mensagem sobre sustentabilidade.
+
+        Essa função cria os widgets (label e botão) para a segunda tela de
+        conteúdo do popup.
+        """
         mensagem = """    A sustentabilidade não é somente uma teoria, mas um estilo
 de vida e boas práticas que se constroem por meio de atitudes diárias. Alguns hábitos
 que podemos colocar em prática em nosso cotidiano: 
@@ -343,6 +393,13 @@ mostra que cada pessoa pode e deve contribuir para um planeta mais saudável e p
 
 
 def mensagem_eco(frame_perfil):
+    """Insere um botão com ícone de folha no `frame_perfil` que abre o popup
+
+    O botão é usado como atalho para chamar `mostrar_mensagem_eco`.
+
+    Parâmetros:
+    - frame_perfil: container (tk.Frame) onde o botão será colocado.
+    """
     leaf = tk.PhotoImage(file=FILES_PATH + "leaf.png")
     botao_leaf = ttk.Button(
         frame_perfil, image=leaf, bootstyle="sucess-link", command=mostrar_mensagem_eco
@@ -352,6 +409,11 @@ def mensagem_eco(frame_perfil):
 
 
 def logoff():
+    """Encerra a sessão do usuário atual e retorna à tela de login.
+
+    Limpa o dicionário `contexto.colaborador`, destrói os widgets da janela
+    principal e chama `login()` para reiniciar o fluxo de autenticação.
+    """
     contexto.colaborador = {}
 
     for widget in contexto.janela.winfo_children():
@@ -361,6 +423,18 @@ def logoff():
 
 
 def login():
+    """Fluxo de autenticação e inicialização da interface principal.
+
+    Executa a tela de login, obtém os dados do colaborador autenticado e,
+    caso exista um usuário, constrói a área superior (`logo_frame`) e
+    monta a barra de ferramentas adequada ao cargo (Admin, Coordenador ou
+    Professor).
+
+    Efeitos colaterais:
+    - Modifica `contexto.janela`, `contexto.frame_conteudo` e cria `logo_frame`.
+    - Chama `criar_barra_admin`, `criar_barra_coordenador` ou
+      `criar_barra_professor` conforme o cargo.
+    """
     global logo_frame
     ui_login()
 
@@ -399,6 +473,13 @@ def login():
 
 
 def main():
+    """Ponto de entrada da aplicação.
+
+    - Verifica variáveis de ambiente e arquivos JSON necessários.
+    - Inicializa a janela principal (`contexto.janela`), aplica estilos
+      do tema `ttkbootstrap`, configura tamanho e comportamento da janela,
+      e inicia o loop principal do Tkinter.
+    """
     checar_existencia_env()
     checar_json_existe()
 
