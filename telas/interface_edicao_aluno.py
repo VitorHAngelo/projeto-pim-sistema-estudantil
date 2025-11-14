@@ -127,7 +127,6 @@ def reconstruir_frame(aluno):
 
     for i in range(1, 10):
         frame_edicao_aluno.rowconfigure(i, minsize=20)
-    # frame_cadastro.rowconfigure(8, minsize=250, weight=1)
     frame_edicao_aluno.columnconfigure((0, 6), minsize=10)
     frame_edicao_aluno.columnconfigure((1, 2, 3, 4, 5), pad=5, weight=0, minsize=10)
     frame_edicao_aluno.grid(row=0, column=0, sticky="sew", pady=15)

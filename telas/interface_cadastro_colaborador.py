@@ -15,7 +15,6 @@ from telas.utils_tk import (
 
 
 def cadastrar(event=None):
-    # Limpa apenas a área de erros antes da validação
     limpar_widgets(frame_erros)
     usuario = {}
     erros = []
@@ -90,7 +89,6 @@ def reconstruir_frame():
 
     for i in range(1, 10):
         frame_cadastro.rowconfigure(i, minsize=20)
-    # frame_cadastro.rowconfigure(8, minsize=250, weight=1)
     frame_cadastro.columnconfigure((0, 6), minsize=10)
     frame_cadastro.columnconfigure((1, 2, 3, 4, 5), pad=5, weight=0, minsize=10)
     frame_cadastro.grid(row=0, column=0, sticky="sew", pady=15)

@@ -182,17 +182,12 @@ def criar_interface_atividades():
     ttk.Separator(frame_botoes, orient=tk.VERTICAL, bootstyle="primary").grid(
         row=1, column=1, padx=5
     )
-    # botao_remove.grid(row=1, column=1, padx=5, pady=5)
 
 
 def salvar_atividade(atividade, event=None):
-    # Clear any previous error messages but do NOT destroy the input widgets yet
-    # (calling limpar_widgets() without args removes widgets referenced below and
-    # causes _tkinter.TclError when we try to .get() from them).
     try:
         limpar_widgets(frame_erros)
     except Exception:
-        # frame_erros may not exist yet; ignore in that case
         pass
     erros = []
     # NOME ATIVIDADE
@@ -239,12 +234,10 @@ def salvar_atividade(atividade, event=None):
     messagebox.showinfo(
         "Cadastro", message="Atividade criada", icon="info", parent=frame_pai
     )
-    # Clear the turma selector shown in the main listing (if it exists)
     try:
         campo_turma.set("")
     except Exception:
         pass
-    # Refresh / clear only the edit and listing frames
     try:
         limpar_widgets(frame_editar_atividades)
     except Exception:
@@ -457,7 +450,6 @@ def salvar_edicao(atividade, nome_antigo):
 
 
 def limpar(frame):
-    # Limpa apenas o frame passado (não toda a janela), depois recria o formulário
     limpar_widgets(frame)
     criar_atividade(frame)
 
@@ -724,8 +716,6 @@ def mudar_mes(mes: int, ano: int, operacao: str):
 
 
 def criar_edicao_frequencia(data: datetime, turma):
-    # Ensure the edit frame exists and is a valid widget. It may have been
-    # destroyed by previous calls to limpar_widgets(contexto.frame_conteudo).
     global frame_editar_frequencia
     try:
         exists = frame_editar_frequencia.winfo_exists()
@@ -733,8 +723,6 @@ def criar_edicao_frequencia(data: datetime, turma):
         exists = False
 
     if not exists:
-        # Recreate and grid the frame in the same place used by
-        # criar_interface_frequencia so the UI remains consistent.
         frame_editar_frequencia = ttk.Frame(contexto.frame_conteudo)
         frame_editar_frequencia.grid(row=0, column=1, rowspan=10)
 
@@ -820,7 +808,6 @@ def criar_edicao_frequencia(data: datetime, turma):
         linha += 1
 
     def salvar_frequencia():
-        # Get current turma data
         dados_turma = get_turma(turma)
         if not dados_turma:
             messagebox.showerror(
@@ -829,21 +816,17 @@ def criar_edicao_frequencia(data: datetime, turma):
             )
             return
 
-        # Initialize frequency structure if it doesn't exist
         if "frequencia" not in dados_turma:
             dados_turma["frequencia"] = {}
 
-        # Use date as key in ddmmyyyy format
         chave_data = data.strftime("%d%m%Y")
         if chave_data not in dados_turma["frequencia"]:
             dados_turma["frequencia"][chave_data] = {}
 
-        # Update each student's attendance
         for ra, var in dicionario_presenca.items():
             dados_turma["frequencia"][chave_data][ra] = bool(var.get())
 
-        # Save updated turma
-        nome = dados_turma.pop("nome")  # editar_turma expects {nome: dados}
+        nome = dados_turma.pop("nome")
         if editar_turma({nome: dados_turma}):
             messagebox.showinfo(
                 "Sucesso",
@@ -873,8 +856,6 @@ def criar_edicao_frequencia(data: datetime, turma):
 
 
 def mudar_mes_frequencia(frame_calendario, mes: int, ano: int, operacao: str):
-    # frame_calendario must be forwarded so gerar_calendario_frequencia
-    # receives the correct widget (was passing ints previously)
     if operacao == ">":
         mes += 1
     else:
@@ -919,13 +900,11 @@ def criar_diario(
         command=lambda: mudar_mes(mes_escolhido, ano_escolhido, ">"),
     )
     botao_mes_anterior.grid(row=0, column=0, padx=5)
-    # frame_barra_diario.columnconfigure(1, weight=1)
     label_mes_ano.grid(row=0, column=1, padx=5, sticky=tk.NSEW)
     botao_mes_seguinte.grid(row=0, column=2, padx=5)
 
     frame_diario = ttk.Frame(frame_barra_diario)
     frame_diario.grid(row=1, column=0, padx=10, pady=5, columnspan=10)
-    # frame_diario.rowconfigure(1, weight=1)
 
     frame_anotacoes = ttk.Frame(frame_diario, relief="sunken", padding=10)
     frame_anotacoes.grid(row=0, column=9, padx=30, sticky="nwes", rowspan=30)
@@ -1058,7 +1037,6 @@ def criar_interface_frequencia():
 
     frame_diario = ttk.Frame(frame_calendario)
     frame_diario.grid(row=1, column=0, padx=10, pady=5, columnspan=10)
-    # frame_diario.rowconfigure(1, weight=1)
 
     frame_anotacoes = ttk.Frame(frame_diario, relief="sunken", padding=10)
     frame_anotacoes.grid(row=0, column=9, padx=30, sticky="nwes", rowspan=30)

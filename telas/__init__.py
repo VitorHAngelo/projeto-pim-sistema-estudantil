@@ -1,3 +1,6 @@
+# Este arquivo contém as importações e inicializações das interfaces e utilitários do sistema.
+# Cada função ou variável importada é descrita abaixo:
+
 from .interface_login import tela_login
 from .interface_cadastro_colaborador import iniciar_cadastro
 from .alterar_senha_admin import alterar_senha_admin
@@ -14,8 +17,6 @@ from .interface_atividades_prof import (
 )
 from .interface_inteligencia import criar_frame_chat
 from .utils_tk import limpar_widgets
-
-# utils_tk
 from .utils_tk import ui_login, ui_geral, encerrar, alt_tamanho_janela
 
 __all__ = [
